@@ -22,13 +22,14 @@ import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.ty
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import { UsersService } from '../users/users.service';
 import { AllConfigType } from '../config/config.type';
-import { MailService } from '../mail/mail.service';
 import { RoleEnum } from '../roles/roles.enum';
 import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { PrismaService } from '../database/prisma.service';
+import { MailQueueService } from '../queue/mail-queue.service';
+import { forgotPasswordSecret } from './forgot-password-secret';
 
 @Injectable()
 export class AuthService {
@@ -36,9 +37,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
     private readonly sessionService: SessionService,
-    private readonly mailService: MailService,
     private readonly configService: ConfigService<AllConfigType>,
     private readonly prisma: PrismaService,
+    private readonly mailQueue: MailQueueService,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -199,7 +200,12 @@ export class AuthService {
     };
   }
 
-  async register(dto: AuthRegisterLoginDto): Promise<void> {
+  /**
+   * 创建未激活用户，并把确认信放进队列。JWT 由 Worker 发送前签发。
+   * @param dto
+   * @param lang
+   */
+  async register(dto: AuthRegisterLoginDto, lang?: string): Promise<void> {
     const user = await this.usersService.create({
       ...dto,
       email: dto.email,
@@ -211,25 +217,10 @@ export class AuthService {
       },
     });
 
-    const hash = await this.jwtService.signAsync(
-      {
-        confirmEmailUserId: user.id,
-      },
-      {
-        secret: this.configService.getOrThrow('auth.confirmEmailSecret', {
-          infer: true,
-        }),
-        expiresIn: this.configService.getOrThrow('auth.confirmEmailExpires', {
-          infer: true,
-        }),
-      },
-    );
-
-    await this.mailService.userSignUp({
-      to: dto.email,
-      data: {
-        hash,
-      },
+    await this.mailQueue.enqueue({
+      kind: 'confirm-email',
+      userId: user.id,
+      lang: this.resolveLang(lang),
     });
   }
 
@@ -320,7 +311,12 @@ export class AuthService {
     await this.usersService.update(user.id, user);
   }
 
-  async forgotPassword(email: string): Promise<void> {
+  /**
+   * 把重置信放进队列。未注册邮箱在统一错误模式下不发信。
+   * @param email
+   * @param lang
+   */
+  async forgotPassword(email: string, lang?: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
@@ -343,28 +339,10 @@ export class AuthService {
       });
     }
 
-    const tokenExpiresIn = this.configService.getOrThrow('auth.forgotExpires', {
-      infer: true,
-    });
-
-    const tokenExpires = Date.now() + ms(tokenExpiresIn);
-
-    const hash = await this.jwtService.signAsync(
-      {
-        forgotUserId: user.id,
-      },
-      {
-        secret: this.getForgotSecret(user),
-        expiresIn: tokenExpiresIn,
-      },
-    );
-
-    await this.mailService.forgotPassword({
-      to: email,
-      data: {
-        hash,
-        tokenExpires,
-      },
+    await this.mailQueue.enqueue({
+      kind: 'forgot-password',
+      userId: user.id,
+      lang: this.resolveLang(lang),
     });
   }
 
@@ -436,9 +414,16 @@ export class AuthService {
     return this.usersService.findById(userJwtPayload.id);
   }
 
+  /**
+   * 更新当前用户。更换邮箱时只入队，不在响应里等待 SMTP。
+   * @param userJwtPayload
+   * @param userDto
+   * @param lang
+   */
   async update(
     userJwtPayload: JwtPayloadType,
     userDto: AuthUpdateDto,
+    lang?: string,
   ): Promise<NullableType<User>> {
     const currentUser = await this.usersService.findById(userJwtPayload.id);
 
@@ -502,26 +487,11 @@ export class AuthService {
         });
       }
 
-      const hash = await this.jwtService.signAsync(
-        {
-          confirmEmailUserId: currentUser.id,
-          newEmail: userDto.email,
-        },
-        {
-          secret: this.configService.getOrThrow('auth.confirmEmailSecret', {
-            infer: true,
-          }),
-          expiresIn: this.configService.getOrThrow('auth.confirmEmailExpires', {
-            infer: true,
-          }),
-        },
-      );
-
-      await this.mailService.confirmNewEmail({
-        to: userDto.email,
-        data: {
-          hash,
-        },
+      await this.mailQueue.enqueue({
+        kind: 'confirm-new-email',
+        userId: currentUser.id,
+        lang: this.resolveLang(lang),
+        newEmail: userDto.email,
       });
     }
 
@@ -598,15 +568,27 @@ export class AuthService {
     });
   }
 
+  /**
+   * 请求语言优先，否则用应用的默认语言。
+   * @param lang
+   */
+  private resolveLang(lang?: string): string {
+    return (
+      lang ??
+      this.configService.getOrThrow('app.fallbackLanguage', { infer: true })
+    );
+  }
+
+  /**
+   * 重置链接密钥。密码变化后，已经发出的链接不再通过校验。
+   * @param user
+   */
   private getForgotSecret(user: User): string {
-    // The secret embeds the current password hash, so every outstanding
-    // reset link stops verifying as soon as the password changes — this is
-    // what makes reset links single-use without storing anything extra.
     const forgotSecret = this.configService.getOrThrow('auth.forgotSecret', {
       infer: true,
     });
 
-    return `${forgotSecret}${user.password ?? ''}`;
+    return forgotPasswordSecret(forgotSecret, user.password);
   }
 
   private async getTokensData(data: {

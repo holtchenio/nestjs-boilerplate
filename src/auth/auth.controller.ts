@@ -27,6 +27,7 @@ import { RefreshResponseDto } from './dto/refresh-response.dto';
 import type { RequestWithUser } from '../utils/types/request-with-user.type';
 import type { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import type { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
+import { I18nContext } from 'nestjs-i18n';
 
 @ApiTags('Auth')
 @Controller({
@@ -51,7 +52,7 @@ export class AuthController {
   @Post('email/register')
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
-    return this.service.register(createUserDto);
+    return this.service.register(createUserDto, I18nContext.current()?.lang);
   }
 
   @Post('email/confirm')
@@ -75,7 +76,10 @@ export class AuthController {
   async forgotPassword(
     @Body() forgotPasswordDto: AuthForgotPasswordDto,
   ): Promise<void> {
-    return this.service.forgotPassword(forgotPasswordDto.email);
+    return this.service.forgotPassword(
+      forgotPasswordDto.email,
+      I18nContext.current()?.lang,
+    );
   }
 
   @Post('reset/password')
@@ -148,7 +152,11 @@ export class AuthController {
     @Request() request: RequestWithUser<JwtPayloadType>,
     @Body() userDto: AuthUpdateDto,
   ): Promise<NullableType<User>> {
-    return this.service.update(request.user, userDto);
+    return this.service.update(
+      request.user,
+      userDto,
+      I18nContext.current()?.lang,
+    );
   }
 
   @ApiBearerAuth()

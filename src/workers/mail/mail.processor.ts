@@ -2,19 +2,23 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { PinoLogger } from 'nestjs-pino';
 import { MAIL_QUEUE, MailJob } from '../../queue/mail-job';
+import { MailJobHandler } from './mail-job.handler';
 
 @Processor(MAIL_QUEUE, {
   concurrency: 5,
   lockDuration: 30_000,
 })
 export class MailProcessor extends WorkerHost {
-  constructor(private readonly logger: PinoLogger) {
+  constructor(
+    private readonly logger: PinoLogger,
+    private readonly handler: MailJobHandler,
+  ) {
     super();
     this.logger.setContext(MailProcessor.name);
   }
 
   /**
-   * 记录邮件任务。发信在后续任务接入，这里不打印 newEmail。
+   * 发送队列中的邮件。失败日志只带 jobId 和 kind。
    * @param job
    */
   async process(job: Job<MailJob>): Promise<void> {
@@ -24,8 +28,8 @@ export class MailProcessor extends WorkerHost {
       kind: job.data.kind,
     };
     try {
-      this.logger.info(fields, 'mail job received');
-      await Promise.resolve();
+      await this.handler.handle(job.data);
+      this.logger.info(fields, 'mail job completed');
     } catch (error) {
       this.logger.error({ ...fields, err: error }, 'mail job failed');
       throw error;

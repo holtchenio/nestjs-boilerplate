@@ -1,11 +1,12 @@
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
+import { MailQueueService } from '../queue/mail-queue.service';
 import { SessionService } from '../session/session.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { MailService } from '../mail/mail.service';
 import { User } from '../users/domain/user';
+import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 
 describe('AuthService.resetPassword', () => {
   const user = {
@@ -47,9 +48,9 @@ describe('AuthService.resetPassword', () => {
         jwtService,
         usersService,
         session as unknown as SessionService,
-        {} as MailService,
         configService,
         prisma,
+        { enqueue: jest.fn() } as unknown as MailQueueService,
       ),
       session,
     };
@@ -81,5 +82,39 @@ describe('AuthService.resetPassword', () => {
       tx,
     );
     expect(update).toHaveBeenCalledWith(user.id, user, tx);
+  });
+});
+
+describe('AuthService.register', () => {
+  it('should enqueue a confirm-email job without a token', async () => {
+    const enqueue = jest.fn().mockResolvedValue('mail:confirm-email:3:1');
+    const auth = new AuthService(
+      { signAsync: jest.fn() } as unknown as JwtService,
+      {
+        create: jest.fn().mockResolvedValue({ id: 3 }),
+      } as unknown as UsersService,
+      {} as SessionService,
+      {
+        getOrThrow: jest.fn().mockReturnValue('en'),
+      } as unknown as ConfigService,
+      {} as PrismaService,
+      { enqueue } as unknown as MailQueueService,
+    );
+
+    await auth.register(
+      {
+        email: 'ada@example.com',
+        password: 'secret',
+      } as AuthRegisterLoginDto,
+      'zh',
+    );
+
+    expect(enqueue).toHaveBeenCalledWith({
+      kind: 'confirm-email',
+      userId: 3,
+      lang: 'zh',
+    });
+    expect(JSON.stringify(enqueue.mock.calls)).not.toContain('hash');
+    expect(JSON.stringify(enqueue.mock.calls)).not.toContain('secret');
   });
 });

@@ -19,6 +19,8 @@ export class MailerService {
         user: configService.get('mail.user', { infer: true }),
         pass: configService.get('mail.password', { infer: true }),
       },
+      connectionTimeout: 10_000,
+      socketTimeout: 10_000,
     });
   }
 
