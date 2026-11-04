@@ -488,4 +488,5 @@
 | 阶段 0 文档 | 已完成 |
 | T1.1–T1.5 | 已完成。`pnpm install --frozen-lockfile`、`pnpm run build`、`pnpm run lint`、`pnpm exec jest --passWithNoTests` 通过。本机没有 Docker，关系型 e2e 未跑 |
 | T1.6 | 跳过。可选补丁要靠 e2e 卡住行为变化，当前环境没有 Docker |
-| T2a.1 至 T7.5 | 未开始 |
+| T2a.1 | 已完成。`pnpm run build` 与 `pnpm run lint` 通过。本机没有 Docker，关系型 e2e 和生成器套件未跑。`src`、`test`、`package.json`、`.github` 中已无 mongoose |
+| T2b.1 至 T7.5 | 未开始 |

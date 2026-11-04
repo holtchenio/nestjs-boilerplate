@@ -8,9 +8,10 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const roles = this.reflector.getAllAndOverride<
-      (number | string)[] | undefined
-    >('roles', [context.getClass(), context.getHandler()]);
+    const roles = this.reflector.getAllAndOverride<number[] | undefined>(
+      'roles',
+      [context.getClass(), context.getHandler()],
+    );
     if (!roles?.length) {
       return true;
     }
