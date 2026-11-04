@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -21,10 +22,12 @@ export class SortUserDto {
   @ApiProperty()
   @Type(() => String)
   @IsString()
+  @IsIn(['id', 'email', 'firstName', 'lastName', 'createdAt'])
   orderBy: keyof User;
 
   @ApiProperty()
   @IsString()
+  @IsIn(['ASC', 'DESC', 'asc', 'desc'])
   order: string;
 }
 

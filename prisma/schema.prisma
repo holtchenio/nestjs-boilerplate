@@ -1,0 +1,72 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id    Int    @id
+  name  String
+  users User[]
+
+  @@map("role")
+}
+
+model Status {
+  id    Int    @id
+  name  String
+  users User[]
+
+  @@map("status")
+}
+
+model File {
+  id    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  path  String
+  users User[]
+
+  @@map("file")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String?   @unique
+  password  String?
+  provider  String    @default("email")
+  socialId  String?
+  firstName String?
+  lastName  String?
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  deletedAt DateTime? @db.Timestamptz(6)
+  photoId   String?   @unique @db.Uuid
+  roleId    Int?
+  statusId  Int?
+  photo     File?     @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role      Role?     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status    Status?   @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sessions  Session[]
+
+  @@unique([provider, socialId])
+  @@index([socialId])
+  @@index([firstName])
+  @@index([lastName])
+  @@map("user")
+}
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  hash      String
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  deletedAt DateTime? @db.Timestamptz(6)
+  userId    Int?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId])
+  @@map("session")
+}

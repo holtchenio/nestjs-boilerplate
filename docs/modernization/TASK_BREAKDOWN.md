@@ -489,4 +489,5 @@
 | T1.1–T1.5 | 已完成。`pnpm install --frozen-lockfile`、`pnpm run build`、`pnpm run lint`、`pnpm exec jest --passWithNoTests` 通过。本机没有 Docker，关系型 e2e 未跑 |
 | T1.6 | 跳过。可选补丁要靠 e2e 卡住行为变化，当前环境没有 Docker |
 | T2a.1 | 已完成。`pnpm run build` 与 `pnpm run lint` 通过。本机没有 Docker，关系型 e2e 和生成器套件未跑。`src`、`test`、`package.json`、`.github` 中已无 mongoose |
-| T2b.1 至 T7.5 | 未开始 |
+| T2b.2–T2b.4 | 进行中。Prisma schema、`0_init` SQL、Prisma 仓储已接上运行时。`pnpm run build` 与 `pnpm run lint` 通过。临时库演练和 e2e 未跑（本机没有 Docker）。TypeORM 文件仍在 |
+| T2b.1、T2b.5–T2b.7、T3.1 至 T7.5 | 未开始。排序白名单和邮箱 `P2002` 映射已写进仓储，事务还没套到重置密码 |

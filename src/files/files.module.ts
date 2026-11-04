@@ -3,14 +3,14 @@ import {
   Module,
 } from '@nestjs/common';
 
-import { RelationalFilePersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+import { PrismaFilePersistenceModule } from './infrastructure/persistence/prisma/prisma-persistence.module';
 import { FilesService } from './files.service';
 import fileConfig from './config/file.config';
 import { FileConfig, FileDriver } from './config/file-config.type';
 import { FilesLocalModule } from './infrastructure/uploader/local/files.module';
 import { FilesS3Module } from './infrastructure/uploader/s3/files.module';
 import { FilesS3PresignedModule } from './infrastructure/uploader/s3-presigned/files.module';
-const infrastructurePersistenceModule = RelationalFilePersistenceModule;
+const infrastructurePersistenceModule = PrismaFilePersistenceModule;
 
 const infrastructureUploaderModule =
   (fileConfig() as FileConfig).driver === FileDriver.LOCAL
