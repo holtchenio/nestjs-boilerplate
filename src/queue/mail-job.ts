@@ -19,5 +19,6 @@ const mailJobBucketMs = 60_000;
  */
 export function mailJobId(job: MailJob, now = Date.now()): string {
   const bucket = Math.floor(now / mailJobBucketMs);
-  return `mail:${job.kind}:${job.userId}:${bucket}`;
+  // BullMQ 6 拒绝自定义 jobId 里的冒号。
+  return `mail.${job.kind}.${job.userId}.${bucket}`;
 }

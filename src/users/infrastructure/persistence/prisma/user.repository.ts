@@ -253,6 +253,24 @@ function toUpdateInput(payload: Partial<User>): Prisma.UserUpdateInput {
 }
 
 /**
+ * 取出唯一约束名。Prisma 7 的 driver adapter 把索引名放在 cause 里。
+ * @param error
+ */
+function uniqueConstraintText(
+  error: Prisma.PrismaClientKnownRequestError,
+): string {
+  const meta = error.meta ?? {};
+  const adapter = meta.driverAdapterError as
+    | { cause?: { constraint?: { index?: string } } }
+    | undefined;
+  return [
+    ...(Array.isArray(meta.target) ? meta.target.map(String) : []),
+    typeof meta.constraint === 'string' ? meta.constraint : '',
+    adapter?.cause?.constraint?.index ?? '',
+  ].join(' ');
+}
+
+/**
  * 把邮箱唯一冲突转成现有的 422 错误体。
  * @param error
  */
@@ -261,10 +279,8 @@ function throwMappedUniqueError(error: unknown): never {
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === 'P2002'
   ) {
-    const target = Array.isArray(error.meta?.target)
-      ? error.meta.target.map(String)
-      : [];
-    if (target.includes('email')) {
+    const target = uniqueConstraintText(error);
+    if (target.includes('email') && !target.includes('social')) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: { email: 'emailAlreadyExists' },

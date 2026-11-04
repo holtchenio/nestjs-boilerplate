@@ -166,7 +166,7 @@ type MailJob =
 | 参数 | 值 |
 | --- | --- |
 | 重试 | 5 次，指数退避，起始 5 秒 |
-| 幂等 | `jobId` 为 `mail:{kind}:{userId}:{时间桶}`。同一用户同一类邮件在 60 秒内重复提交不产生第二封 |
+| 幂等 | `jobId` 为 `mail.{kind}.{userId}.{时间桶}`。同一用户同一类邮件在 60 秒内重复提交不产生第二封。BullMQ 6 不允许自定义 id 含冒号 |
 | 并发 | Worker `concurrency: 5` |
 | 单次超时 | nodemailer `connectionTimeout` 与 `socketTimeout` 各 10 秒。BullMQ 的 `lockDuration` 设为 30 秒，避免锁先于 SMTP 过期 |
 | 失败 | pino `error`，带 `jobId` 和 `kind`，不带载荷里的 `newEmail` |

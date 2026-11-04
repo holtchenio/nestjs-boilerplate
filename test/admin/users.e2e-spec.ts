@@ -143,6 +143,18 @@ describe('Users Module', () => {
             expect(body.data[0].password).not.toBeDefined();
           });
       });
+
+      it('should reject an unknown sort field: /api/v1/users (GET)', () => {
+        return request(app)
+          .get('/api/v1/users')
+          .query({
+            sort: JSON.stringify([{ orderBy: 'password', order: 'ASC' }]),
+          })
+          .auth(apiToken, {
+            type: 'bearer',
+          })
+          .expect(422);
+      });
     });
   });
 });

@@ -27,6 +27,7 @@ import { RedisModule } from './cache/redis.module';
 import { LoggerModule } from 'nestjs-pino';
 import { loggerModuleParams } from './logger/logger.options';
 import { QueueModule } from './queue/queue.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { QueueModule } from './queue/queue.module';
     MailModule,
     MailerModule,
     HomeModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

@@ -281,8 +281,8 @@ export class UsersService {
       {
         // Do not remove comment below.
         // <updating-property-payload />
-        firstName: updateUserDto.firstName,
-        lastName: updateUserDto.lastName,
+        firstName: textValue(updateUserDto.firstName),
+        lastName: textValue(updateUserDto.lastName),
         email,
         password,
         photo,
@@ -298,4 +298,15 @@ export class UsersService {
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
   }
+}
+
+/**
+ * 把意外的数字名字转成字符串，和原来写入 varchar 的结果一致。
+ * @param value
+ */
+function textValue(value?: string | null): string | null | undefined {
+  if (value == null) {
+    return value;
+  }
+  return String(value);
 }

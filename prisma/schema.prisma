@@ -41,7 +41,7 @@ model User {
   firstName String?
   lastName  String?
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @default(now()) @db.Timestamptz(6)
   deletedAt DateTime? @db.Timestamptz(6)
   photoId   String?   @unique @db.Uuid
   roleId    Int?
@@ -62,7 +62,7 @@ model Session {
   id        Int       @id @default(autoincrement())
   hash      String
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @default(now()) @db.Timestamptz(6)
   deletedAt DateTime? @db.Timestamptz(6)
   userId    Int?
   user      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)

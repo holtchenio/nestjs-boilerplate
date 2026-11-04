@@ -53,6 +53,28 @@ describe('UsersPrismaRepository', () => {
     });
   });
 
+  it('should map a Prisma email constraint name to 422 emailAlreadyExists', async () => {
+    const error = new Prisma.PrismaClientKnownRequestError(
+      'Unique constraint failed',
+      {
+        code: 'P2002',
+        clientVersion: '7.10.1',
+        meta: {
+          driverAdapterError: {
+            cause: { constraint: { index: 'user_email_key' } },
+          },
+        },
+      },
+    );
+    const repo = repository(error);
+
+    await expect(repo.create(createPayload)).rejects.toMatchObject({
+      response: {
+        errors: { email: 'emailAlreadyExists' },
+      },
+    });
+  });
+
   it('should rethrow a unique conflict that is not the email', async () => {
     const error = uniqueError(['provider', 'socialId']);
     const repo = repository(error);

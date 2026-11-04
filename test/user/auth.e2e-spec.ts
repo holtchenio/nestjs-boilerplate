@@ -8,6 +8,7 @@ import {
   MAIL_PORT,
 } from '../utils/constants';
 import type { MailMessage } from '../utils/types/mail-message.type';
+import { waitForMailHash } from '../utils/wait-for-mail';
 
 describe('Auth Module', () => {
   const app = APP_URL;
@@ -45,6 +46,24 @@ describe('Auth Module', () => {
         .expect(204);
     });
 
+    it('should reject a second concurrent registration of the same email', async () => {
+      const email = `race.${Date.now()}@example.com`;
+      const payload = {
+        email,
+        password: 'secret',
+        firstName: 'Race',
+        lastName: 'E2E',
+      };
+      const responses = await Promise.all([
+        request(app).post('/api/v1/auth/email/register').send(payload),
+        request(app).post('/api/v1/auth/email/register').send(payload),
+      ]);
+      const statuses = responses.map((response) => response.status).sort();
+      expect(statuses).toEqual([204, 422]);
+      const conflict = responses.find((response) => response.status === 422);
+      expect(conflict?.body.errors.email).toBe('emailAlreadyExists');
+    });
+
     describe('Login', () => {
       it('should successfully with unconfirmed email: /api/v1/auth/email/login (POST)', () => {
         return request(app)
@@ -59,18 +78,17 @@ describe('Auth Module', () => {
 
     describe('Confirm email', () => {
       it('should successfully: /api/v1/auth/email/confirm (POST)', async () => {
-        const hash = await request(mail)
-          .get('/email')
-          .then(({ body }) =>
-            body
-              .find(
-                (letter: MailMessage) =>
-                  letter.to[0].address.toLowerCase() ===
-                    newUserEmail.toLowerCase() &&
-                  /.*confirm\-email\?hash\=(\S+).*/g.test(letter.text),
-              )
-              ?.text.replace(/.*confirm\-email\?hash\=(\S+).*/g, '$1'),
-          );
+        const hash = await waitForMailHash(mail, (letter: MailMessage) => {
+          if (
+            letter.to[0].address.toLowerCase() === newUserEmail.toLowerCase() &&
+            /.*confirm\-email\?hash\=(\S+).*/g.test(letter.text)
+          ) {
+            return letter.text.replace(
+              /.*confirm\-email\?hash\=(\S+).*/g,
+              '$1',
+            );
+          }
+        });
 
         return request(app)
           .post('/api/v1/auth/email/confirm')
@@ -81,18 +99,17 @@ describe('Auth Module', () => {
       });
 
       it('should fail for already confirmed email: /api/v1/auth/email/confirm (POST)', async () => {
-        const hash = await request(mail)
-          .get('/email')
-          .then(({ body }) =>
-            body
-              .find(
-                (letter: MailMessage) =>
-                  letter.to[0].address.toLowerCase() ===
-                    newUserEmail.toLowerCase() &&
-                  /.*confirm\-email\?hash\=(\S+).*/g.test(letter.text),
-              )
-              ?.text.replace(/.*confirm\-email\?hash\=(\S+).*/g, '$1'),
-          );
+        const hash = await waitForMailHash(mail, (letter: MailMessage) => {
+          if (
+            letter.to[0].address.toLowerCase() === newUserEmail.toLowerCase() &&
+            /.*confirm\-email\?hash\=(\S+).*/g.test(letter.text)
+          ) {
+            return letter.text.replace(
+              /.*confirm\-email\?hash\=(\S+).*/g,
+              '$1',
+            );
+          }
+        });
 
         return request(app)
           .post('/api/v1/auth/email/confirm')
@@ -142,18 +159,17 @@ describe('Auth Module', () => {
         .send({ email: userEmail })
         .expect(204);
 
-      const hash = await request(mail)
-        .get('/email')
-        .then(({ body }) =>
-          body
-            .find(
-              (letter: MailMessage) =>
-                letter.to[0].address.toLowerCase() ===
-                  userEmail.toLowerCase() &&
-                /.*password\-change\?hash\=([^&\s]+).*/g.test(letter.text),
-            )
-            ?.text.replace(/.*password\-change\?hash\=([^&\s]+).*/g, '$1'),
-        );
+      const hash = await waitForMailHash(mail, (letter: MailMessage) => {
+        if (
+          letter.to[0].address.toLowerCase() === userEmail.toLowerCase() &&
+          /.*password\-change\?hash\=([^&\s]+).*/g.test(letter.text)
+        ) {
+          return letter.text.replace(
+            /.*password\-change\?hash\=([^&\s]+).*/g,
+            '$1',
+          );
+        }
+      });
 
       await request(app)
         .post('/api/v1/auth/reset/password')
@@ -258,6 +274,30 @@ describe('Auth Module', () => {
         .expect(401);
     });
 
+    it('should reject the current refresh token after logout', async () => {
+      const login = await request(app)
+        .post('/api/v1/auth/email/login')
+        .send({ email: newUserEmail, password: newUserPassword })
+        .expect(200);
+      const accessToken = login.body.token as string;
+      const refreshToken = login.body.refreshToken as string;
+
+      await request(app)
+        .post('/api/v1/auth/logout')
+        .auth(accessToken, { type: 'bearer' })
+        .expect(204);
+
+      await request(app)
+        .post('/api/v1/auth/refresh')
+        .auth(refreshToken, { type: 'bearer' })
+        .expect(401);
+
+      await request(app)
+        .get('/api/v1/auth/me')
+        .auth(accessToken, { type: 'bearer' })
+        .expect(200);
+    });
+
     it('should update profile successfully: /api/v1/auth/me (PATCH)', async () => {
       const newUserNewName = Date.now();
       const newUserNewPassword = 'new-secret';
@@ -338,19 +378,18 @@ describe('Auth Module', () => {
         })
         .expect(200);
 
-      const hash = await request(mail)
-        .get('/email')
-        .then(({ body }) =>
-          body
-            .find((letter: MailMessage) => {
-              return (
-                letter.to[0].address.toLowerCase() ===
-                  newUserNewEmail.toLowerCase() &&
-                /.*confirm\-new\-email\?hash\=(\S+).*/g.test(letter.text)
-              );
-            })
-            ?.text.replace(/.*confirm\-new\-email\?hash\=(\S+).*/g, '$1'),
-        );
+      const hash = await waitForMailHash(mail, (letter: MailMessage) => {
+        if (
+          letter.to[0].address.toLowerCase() ===
+            newUserNewEmail.toLowerCase() &&
+          /.*confirm\-new\-email\?hash\=(\S+).*/g.test(letter.text)
+        ) {
+          return letter.text.replace(
+            /.*confirm\-new\-email\?hash\=(\S+).*/g,
+            '$1',
+          );
+        }
+      });
 
       await request(app)
         .get('/api/v1/auth/me')

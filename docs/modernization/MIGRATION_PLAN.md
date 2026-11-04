@@ -120,7 +120,7 @@ model User {
   firstName String?
   lastName  String?
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @default(now()) @db.Timestamptz(6)
   deletedAt DateTime? @db.Timestamptz(6)
   photoId   String?   @unique @db.Uuid
   roleId    Int?
@@ -141,7 +141,7 @@ model Session {
   id        Int       @id @default(autoincrement())
   hash      String
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @default(now()) @db.Timestamptz(6)
   deletedAt DateTime? @db.Timestamptz(6)
   userId    Int?
   user      User?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -163,6 +163,8 @@ Prisma 7 的连接串放在 `prisma.config.ts`，不写进 `schema.prisma`。应
 | 时间类型 | `timestamp` | `timestamptz(6)` | 无存量数据，避免时区歧义 |
 | `(provider, socialId)` | 无 | 联合唯一 | 并发社交登录 |
 | 索引名 | TypeORM 生成的 `IDX_*` / `UQ_*` / `FK_*` | Prisma 默认名 | 空库重建，名称不构成 API |
+| 字符串列 | `varchar`（无长度） | `text` | Prisma `String` 不带长度；PostgreSQL 里两者等价，空值约束不变 |
+| `updatedAt` 默认值 | `now()` | `CURRENT_TIMESTAMP` | 与 `createdAt` 一样由数据库填默认值，避免裸插入违反 NOT NULL |
 
 结构对比时只接受上表里的差异。多出来的列、丢了的列、空值约束变化，都算失败。
 
