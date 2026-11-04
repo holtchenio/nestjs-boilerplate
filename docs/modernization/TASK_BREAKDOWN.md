@@ -490,4 +490,6 @@
 | T1.6 | 跳过。可选补丁要靠 e2e 卡住行为变化，当前环境没有 Docker |
 | T2a.1 | 已完成。`pnpm run build` 与 `pnpm run lint` 通过。本机没有 Docker，关系型 e2e 和生成器套件未跑。`src`、`test`、`package.json`、`.github` 中已无 mongoose |
 | T2b.2、T2b.4、T2b.5、T2b.6 | 代码已落地。仓储单测与重置密码事务单测通过。种子入口改为 `prisma db seed`。临时库演练、连续 seed 和 e2e 未跑（本机没有 Docker） |
-| T2b.1、T2b.3、T2b.7、T3.1 至 T7.5 | 未开始。TypeORM 文件仍在，退出条件未满足 |
+| T2b.1、T2b.3、T2b.7 | 未开始。TypeORM 文件仍在，退出条件未满足。本机没有 Docker，临时库演练未跑 |
+| T3.1、T3.2 | 代码已落地。Redis 断开和日志脱敏单测通过。没有 Redis 进程，未做真实连接验收 |
+| T3.3 至 T7.5 | 未开始 |

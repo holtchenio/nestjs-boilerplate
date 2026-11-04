@@ -22,6 +22,10 @@ import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
 import { PrismaModule } from './database/prisma.module';
+import redisConfig from './cache/config/redis.config';
+import { RedisModule } from './cache/redis.module';
+import { LoggerModule } from 'nestjs-pino';
+import { loggerModuleParams } from './logger/logger.options';
 
 @Module({
   imports: [
@@ -36,9 +40,12 @@ import { PrismaModule } from './database/prisma.module';
         facebookConfig,
         googleConfig,
         appleConfig,
+        redisConfig,
       ],
       envFilePath: ['.env'],
     }),
+    LoggerModule.forRoot(loggerModuleParams()),
+    RedisModule,
     PrismaModule,
     I18nModule.forRootAsync({
       useFactory: (configService: ConfigService<AllConfigType>) => ({
