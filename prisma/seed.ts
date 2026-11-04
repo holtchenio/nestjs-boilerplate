@@ -3,9 +3,9 @@ import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { RoleEnum } from '../src/roles/roles.enum';
 import { StatusEnum } from '../src/statuses/statuses.enum';
+import { databaseUrlFromEnv } from './database-url';
 
-const databaseUrl =
-  process.env.DATABASE_URL ?? 'postgresql://root:secret@localhost:5432/api';
+const databaseUrl = databaseUrlFromEnv();
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: databaseUrl }),

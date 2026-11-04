@@ -493,5 +493,5 @@
 | T2b.1、T2b.3 | 已完成。临时库 schema diff 只剩约定差异。漂移检查无输出。种子连续两次不重复。关系型 e2e 23 项通过 |
 | T2b.7 | 退出条件已满足，TypeORM 文件仍在。任务卡要求确认后才删除 |
 | T3.1–T3.6 | 代码已落地。本机 live 与 Redis 正常时的 ready 为 200。暂停 Redis 后 ready 为 503，live 仍为 200，响应不含连接串 |
-| T3.7 | dev/test/ci 启动脚本等待 Redis、执行 Prisma 迁移并拉起 Worker。Docker 套件这次没有重跑 |
+| T3.7 | dev/test/ci 启动脚本等待 Redis、执行 Prisma 迁移并拉起 Worker。`tests` 项目里的关系型 Docker e2e 为 23 项通过 |
 | T4.1 至 T7.5 | 未开始 |
