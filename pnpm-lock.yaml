@@ -17,6 +17,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.1161.0
         version: 3.1161.0
+      '@nestjs/bullmq':
+        specifier: 11.0.5
+        version: 11.0.5(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(bullmq@6.6.0(ioredis@5.11.1)(pg@8.20.0))
       '@nestjs/common':
         specifier: 11.1.18
         version: 11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -59,6 +62,9 @@ importers:
       bcryptjs:
         specifier: 3.0.3
         version: 3.0.3
+      bullmq:
+        specifier: 6.6.0
+        version: 6.6.0(ioredis@5.11.1)(pg@8.20.0)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -996,6 +1002,36 @@ packages:
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
 
+  '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.6':
+    resolution: {integrity: sha512-ugMD1XQPQ0usC3F1frfZzZsNs9uf9Xyxe86GO078Mg0dVY+FQA8TlPL8P5EQwavZs0dUe2LjWJnt4TyQl3pUvw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@msgpackr-extract/msgpackr-extract-darwin-x64@3.0.6':
+    resolution: {integrity: sha512-9ESac1RNLXH7jPZri+aOSoWOG3YpxFUdxgcrjlcANf2wDbEUf55bY3R+uGQqYkqcFLF91EkoAcDsJPbbGj84Sw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm64@3.0.6':
+    resolution: {integrity: sha512-zHceGhbGw8RQG6oSKK/43ieOjutwb/yVXa5kmdJCfFCLbTdOkd4TGfvbiic70VJf8uomuV4AwOfFxe1i2/ZLmQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm@3.0.6':
+    resolution: {integrity: sha512-tAObEkjmQ77IgZfg6UEyEUgKP9vLVMkq2KK8WNa5P7hIieevSMHxyKcqM4zCV+TiZu8q7XmWLrqqlSuaZ5Z0zA==}
+    cpu: [arm]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-linux-x64@3.0.6':
+    resolution: {integrity: sha512-7zKNTbhIGdVO4gsGFNd39g5Go3jN+fuizvWe8SrbGSck9Pcr8x9I5GbtUX1JzBLMaUuI/tcB0JKEYn8RNjKhFg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.6':
+    resolution: {integrity: sha512-J1mT1tp4v9aqcRwUtFrdJ94yei2SlIKm243nWK5bCyOPNnnNknaPzjG6a2Aa5OSfXE36rrth0X2OPHpispZTJw==}
+    cpu: [x64]
+    os: [win32]
+
   '@napi-rs/nice-android-arm-eabi@1.1.1':
     resolution: {integrity: sha512-kjirL3N6TnRPv5iuHw36wnucNqXAO46dzK9oPb0wj076R5Xm8PfUVA9nAFB5ZNMmfJQJVKACAPd/Z2KYMppthw==}
     engines: {node: '>= 10'}
@@ -1108,6 +1144,19 @@ packages:
   '@napi-rs/nice@1.1.1':
     resolution: {integrity: sha512-xJIPs+bYuc9ASBl+cvGsKbGrJmS6fAKaSZCnT0lhahT5rhA2VVy9/EcIgd2JhtEuFOJNx7UHNn/qiTPTY4nrQw==}
     engines: {node: '>= 10'}
+
+  '@nestjs/bull-shared@11.0.5':
+    resolution: {integrity: sha512-QI7GHPk4oePBwszAZn/Kz5hgB79KijB1RDoo+E/BrSt33sHUrvRZXVyO0+knZleyloRYy0LT2VwsqSP/aQvg4Q==}
+    peerDependencies:
+      '@nestjs/common': ^10.0.0 || ^11.0.0
+      '@nestjs/core': ^10.0.0 || ^11.0.0
+
+  '@nestjs/bullmq@11.0.5':
+    resolution: {integrity: sha512-u0VGVc5aER8A+4jEYXDin2rtqIHR8sFL68RUgNDgZslvjdeb1QL4CF+Sr0v4zMXJEfaLSVD606Oq0cryNNCxHg==}
+    peerDependencies:
+      '@nestjs/common': ^10.0.0 || ^11.0.0
+      '@nestjs/core': ^10.0.0 || ^11.0.0
+      bullmq: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0
 
   '@nestjs/cli@11.0.18':
     resolution: {integrity: sha512-z72OS+sFrDgIkNu/e/vUhbnjHZwAYQS8fBJKXLiFyz8059IVuY2FKebV2YMxyhY+920d4LX1hBIAGL5qQNdR7g==}
@@ -2440,6 +2489,24 @@ packages:
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
+  bullmq@6.6.0:
+    resolution: {integrity: sha512-DRaSpPTZDKyNQTLjvmv9A8Ls2H1YLv4FV9SzFGoB7/YZOO3hNjDfpCKy1IY7guOd1mBdpK9maOso8uzPNduyWg==}
+    engines: {node: '>=14.18.0'}
+    peerDependencies:
+      bullmq-otel: '>=2.0.0'
+      ioredis: '>=5.0.0'
+      pg: '>=8.0.0'
+      redis: '>=5.0.0'
+    peerDependenciesMeta:
+      bullmq-otel:
+        optional: true
+      ioredis:
+        optional: true
+      pg:
+        optional: true
+      redis:
+        optional: true
+
   bundle-name@4.1.1:
     resolution: {integrity: sha512-DdH81/zPLVS11EUgWq3tEu/xn+EzljlMYooDNdzWEnFha3R3NBMpMV1UqYIpjYHV/SgpFKMIX1Oh7o06SjM/oA==}
     engines: {node: '>=18'}
@@ -2768,6 +2835,10 @@ packages:
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
 
+  cron-parser@5.10.2:
+    resolution: {integrity: sha512-JfAYMY0LZaWQTuict8PhtF/ksSnq8xefSDmQUnnoqvkPYkU/y3UP0DTWzJKFBz0P1IXsDG8q0vY3zHkoFZOhvw==}
+    engines: {node: '>=18'}
+
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
@@ -2926,6 +2997,10 @@ packages:
 
   destr@2.0.5:
     resolution: {integrity: sha512-ugFTXCtDZunbzasqBxrK93Ik/DRYsO6S/fedkWEMKqt04xZ4csmnmwGDBAb07QWNaGMAmnTIemsYZCksjATwsA==}
+
+  detect-libc@2.1.2:
+    resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
+    engines: {node: '>=8'}
 
   detect-newline@3.1.0:
     resolution: {integrity: sha512-TLz+x/vEXm/Y7P7wn1EJFNLxYpUD4TgMosxY6fAVJUnJMbupHBOncxyWUG9OpTaH9EBD7uFI5LfEgmMOc54DsA==}
@@ -4144,6 +4219,10 @@ packages:
     resolution: {integrity: sha512-5J9ysMYUpYIg9RF2vJpy9SinEmSviFSe0GyPpCQ4L5QSkLAgeLXlTAOu2ZwWUU5m+0SBl6gUU1R1ZQB3aKypfA==}
     engines: {bun: '>=1.0.0', deno: '>=1.30.0', node: '>=8.0.0'}
 
+  luxon@3.7.2:
+    resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
+    engines: {node: '>=12'}
+
   macos-release@3.5.1:
     resolution: {integrity: sha512-Lci/1in+elqZ589PXnfP/iwZXpwQifTM94WJRQwG2tZSdfY7NfB/aUaTARHrohWCgHlXoabeaeXRDOnF5X9JQw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -4317,6 +4396,13 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
+  msgpackr-extract@3.0.6:
+    resolution: {integrity: sha512-prUB8+Gc/1rEzaNo+3Rjo0Hdi6gFjQ9Td0mDsvAIkSGUyp6EADdEBiU71ZP5Mj4jCG+vai0qSNV+yisQAMYuSQ==}
+    hasBin: true
+
+  msgpackr@2.1.3:
+    resolution: {integrity: sha512-C8pQ8SJjwH9C9JiCe5asXWvJC3melOxMuBj7vpTY95096ay6r1wPXG0XN56wMaRpzRPE3hdf4ufukia/j+beKQ==}
+
   multer-s3@3.0.1:
     resolution: {integrity: sha512-BFwSO80a5EW4GJRBdUuSHblz2jhVSAze33ZbnGpcfEicoT0iRolx4kWR+AJV07THFRCQ78g+kelKFdjkCCaXeQ==}
     engines: {node: '>= 12.0.0'}
@@ -4403,6 +4489,10 @@ packages:
   node-fetch@3.3.2:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  node-gyp-build-optional-packages@5.2.2:
+    resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
+    hasBin: true
 
   node-int64@0.4.0:
     resolution: {integrity: sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==}
@@ -4994,6 +5084,11 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  semver@7.8.5:
+    resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   semver@7.8.6:
     resolution: {integrity: sha512-9lpSSU4Mly3mrtruwLs1eLK6+gzbzqeBFwRNjIjE+9LuDpWdYctrQlQ3ej1Ilgi7gknpsTRnPoLP8DpCHqHIJw==}
     engines: {node: '>=10'}
@@ -5382,6 +5477,9 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+
+  tslib@2.9.1:
+    resolution: {integrity: sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -6707,6 +6805,24 @@ snapshots:
 
   '@microsoft/tsdoc@0.16.0': {}
 
+  '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.6':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-darwin-x64@3.0.6':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm64@3.0.6':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm@3.0.6':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-x64@3.0.6':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.6':
+    optional: true
+
   '@napi-rs/nice-android-arm-eabi@1.1.1':
     optional: true
 
@@ -6778,6 +6894,20 @@ snapshots:
       '@napi-rs/nice-win32-ia32-msvc': 1.1.1
       '@napi-rs/nice-win32-x64-msvc': 1.1.1
     optional: true
+
+  '@nestjs/bull-shared@11.0.5(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)':
+    dependencies:
+      '@nestjs/common': 11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.18(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.18)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      tslib: 2.8.1
+
+  '@nestjs/bullmq@11.0.5(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(bullmq@6.6.0(ioredis@5.11.1)(pg@8.20.0))':
+    dependencies:
+      '@nestjs/bull-shared': 11.0.5(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)
+      '@nestjs/common': 11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.18(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.18)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      bullmq: 6.6.0(ioredis@5.11.1)(pg@8.20.0)
+      tslib: 2.8.1
 
   '@nestjs/cli@11.0.18(@swc/cli@0.7.10(@swc/core@1.15.18)(bare-buffer@3.7.1)(chokidar@4.0.3))(@swc/core@1.15.18)(@types/node@25.5.0)':
     dependencies:
@@ -8290,6 +8420,17 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
+  bullmq@6.6.0(ioredis@5.11.1)(pg@8.20.0):
+    dependencies:
+      cron-parser: 5.10.2
+      msgpackr: 2.1.3
+      node-abort-controller: 3.1.1
+      semver: 7.8.5
+      tslib: 2.9.1
+    optionalDependencies:
+      ioredis: 5.11.1
+      pg: 8.20.0
+
   bundle-name@4.1.1:
     dependencies:
       run-applescript: 7.1.0
@@ -8631,6 +8772,10 @@ snapshots:
 
   create-require@1.1.1: {}
 
+  cron-parser@5.10.2:
+    dependencies:
+      luxon: 3.7.2
+
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -8753,6 +8898,9 @@ snapshots:
   depd@2.0.0: {}
 
   destr@2.0.5: {}
+
+  detect-libc@2.1.2:
+    optional: true
 
   detect-newline@3.1.0: {}
 
@@ -10237,6 +10385,8 @@ snapshots:
 
   lru.min@1.1.5: {}
 
+  luxon@3.7.2: {}
+
   macos-release@3.5.1: {}
 
   magic-string@0.30.17:
@@ -10331,6 +10481,22 @@ snapshots:
 
   ms@2.1.3: {}
 
+  msgpackr-extract@3.0.6:
+    dependencies:
+      node-gyp-build-optional-packages: 5.2.2
+    optionalDependencies:
+      '@msgpackr-extract/msgpackr-extract-darwin-arm64': 3.0.6
+      '@msgpackr-extract/msgpackr-extract-darwin-x64': 3.0.6
+      '@msgpackr-extract/msgpackr-extract-linux-arm': 3.0.6
+      '@msgpackr-extract/msgpackr-extract-linux-arm64': 3.0.6
+      '@msgpackr-extract/msgpackr-extract-linux-x64': 3.0.6
+      '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.6
+    optional: true
+
+  msgpackr@2.1.3:
+    optionalDependencies:
+      msgpackr-extract: 3.0.6
+
   multer-s3@3.0.1(@aws-sdk/client-s3@3.1161.0):
     dependencies:
       '@aws-sdk/client-s3': 3.1161.0
@@ -10419,6 +10585,11 @@ snapshots:
       data-uri-to-buffer: 4.0.1
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
+
+  node-gyp-build-optional-packages@5.2.2:
+    dependencies:
+      detect-libc: 2.1.2
+    optional: true
 
   node-int64@0.4.0: {}
 
@@ -11031,6 +11202,8 @@ snapshots:
 
   semver@7.7.3: {}
 
+  semver@7.8.5: {}
+
   semver@7.8.6: {}
 
   send@1.2.1:
@@ -11478,6 +11651,8 @@ snapshots:
       strip-bom: 3.0.0
 
   tslib@2.8.1: {}
+
+  tslib@2.9.1: {}
 
   type-check@0.4.0:
     dependencies:

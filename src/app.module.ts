@@ -26,6 +26,7 @@ import redisConfig from './cache/config/redis.config';
 import { RedisModule } from './cache/redis.module';
 import { LoggerModule } from 'nestjs-pino';
 import { loggerModuleParams } from './logger/logger.options';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { loggerModuleParams } from './logger/logger.options';
     }),
     LoggerModule.forRoot(loggerModuleParams()),
     RedisModule,
+    QueueModule,
     PrismaModule,
     I18nModule.forRootAsync({
       useFactory: (configService: ConfigService<AllConfigType>) => ({
