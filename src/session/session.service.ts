@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { SessionRepository } from './infrastructure/persistence/session.repository';
 import { Session } from './domain/session';
 import { User } from '../users/domain/user';
+import { DbClient } from '../database/prisma.service';
 import { NullableType } from '../utils/types/nullable.type';
 
 @Injectable()
@@ -41,8 +42,16 @@ export class SessionService {
     return this.sessionRepository.deleteById(id);
   }
 
-  deleteByUserId(conditions: { userId: User['id'] }): Promise<void> {
-    return this.sessionRepository.deleteByUserId(conditions);
+  /**
+   * 软删除该用户的全部会话。
+   * @param conditions
+   * @param db
+   */
+  deleteByUserId(
+    conditions: { userId: User['id'] },
+    db?: DbClient,
+  ): Promise<void> {
+    return this.sessionRepository.deleteByUserId(conditions, db);
   }
 
   deleteByUserIdWithExclude(conditions: {

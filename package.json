@@ -20,7 +20,7 @@
     "add:property:to-relational": "hygen property add-to-relational",
     "postadd:property:to-relational": "pnpm run lint -- --fix",
     "app:config": "ts-node -r tsconfig-paths/register ./.install-scripts/index.ts && pnpm install && pnpm run lint -- --fix",
-    "seed:run:relational": "ts-node -r tsconfig-paths/register ./src/database/seeds/relational/run-seed.ts",
+    "seed:run:relational": "prisma db seed",
     "prebuild": "rimraf dist",
     "build": "prisma generate && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

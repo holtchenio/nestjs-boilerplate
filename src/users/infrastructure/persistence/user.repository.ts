@@ -1,3 +1,4 @@
+import { DbClient } from '../../../database/prisma.service';
 import { DeepPartial } from '../../../utils/types/deep-partial.type';
 import { NullableType } from '../../../utils/types/nullable.type';
 import { IPaginationOptions } from '../../../utils/types/pagination-options';
@@ -20,9 +21,22 @@ export abstract class UserRepository {
     paginationOptions: IPaginationOptions;
   }): Promise<User[]>;
 
-  abstract findById(id: User['id']): Promise<NullableType<User>>;
+  /**
+   * @param id
+   * @param db
+   */
+  abstract findById(id: User['id'], db?: DbClient): Promise<NullableType<User>>;
+
   abstract findByIds(ids: User['id'][]): Promise<User[]>;
-  abstract findByEmail(email: User['email']): Promise<NullableType<User>>;
+
+  /**
+   * @param email
+   * @param db
+   */
+  abstract findByEmail(
+    email: User['email'],
+    db?: DbClient,
+  ): Promise<NullableType<User>>;
   abstract findBySocialIdAndProvider({
     socialId,
     provider,
@@ -31,9 +45,15 @@ export abstract class UserRepository {
     provider: User['provider'];
   }): Promise<NullableType<User>>;
 
+  /**
+   * @param id
+   * @param payload
+   * @param db
+   */
   abstract update(
     id: User['id'],
     payload: DeepPartial<User>,
+    db?: DbClient,
   ): Promise<User | null>;
 
   abstract remove(id: User['id']): Promise<void>;

@@ -18,6 +18,7 @@ import { FileType } from '../files/domain/file';
 import { Role } from '../roles/domain/role';
 import { Status } from '../statuses/domain/status';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { DbClient } from '../database/prisma.service';
 
 @Injectable()
 export class UsersService {
@@ -169,9 +170,16 @@ export class UsersService {
     });
   }
 
+  /**
+   * 更新用户。传入 db 时，本次读和写都使用该事务客户端。
+   * @param id
+   * @param updateUserDto
+   * @param db
+   */
   async update(
     id: User['id'],
     updateUserDto: UpdateUserDto,
+    db?: DbClient,
   ): Promise<User | null> {
     // Do not remove comment below.
     // <updating-property />
@@ -179,7 +187,7 @@ export class UsersService {
     let password: string | undefined = undefined;
 
     if (updateUserDto.password) {
-      const userObject = await this.usersRepository.findById(id);
+      const userObject = await this.usersRepository.findById(id, db);
 
       if (userObject && userObject?.password !== updateUserDto.password) {
         const salt = await bcrypt.genSalt();
@@ -192,6 +200,7 @@ export class UsersService {
     if (updateUserDto.email) {
       const userObject = await this.usersRepository.findByEmail(
         updateUserDto.email,
+        db,
       );
 
       if (userObject && userObject.id !== id) {
@@ -267,19 +276,23 @@ export class UsersService {
       };
     }
 
-    return this.usersRepository.update(id, {
-      // Do not remove comment below.
-      // <updating-property-payload />
-      firstName: updateUserDto.firstName,
-      lastName: updateUserDto.lastName,
-      email,
-      password,
-      photo,
-      role,
-      status,
-      provider: updateUserDto.provider,
-      socialId: updateUserDto.socialId,
-    });
+    return this.usersRepository.update(
+      id,
+      {
+        // Do not remove comment below.
+        // <updating-property-payload />
+        firstName: updateUserDto.firstName,
+        lastName: updateUserDto.lastName,
+        email,
+        password,
+        photo,
+        role,
+        status,
+        provider: updateUserDto.provider,
+        socialId: updateUserDto.socialId,
+      },
+      db,
+    );
   }
 
   async remove(id: User['id']): Promise<void> {

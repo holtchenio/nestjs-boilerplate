@@ -28,6 +28,7 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,7 @@ export class AuthService {
     private readonly sessionService: SessionService,
     private readonly mailService: MailService,
     private readonly configService: ConfigService<AllConfigType>,
+    private readonly prisma: PrismaService,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -270,7 +272,9 @@ export class AuthService {
       id: StatusEnum.active,
     };
 
-    await this.usersService.update(user.id, user);
+    await this.prisma.runInTransaction((tx) =>
+      this.usersService.update(user.id, user, tx),
+    );
   }
 
   async confirmNewEmail(hash: string): Promise<void> {
@@ -364,6 +368,11 @@ export class AuthService {
     });
   }
 
+  /**
+   * 校验重置链接后，在同一事务里作废该用户的会话并更新密码。
+   * @param hash
+   * @param password
+   */
   async resetPassword(hash: string, password: string): Promise<void> {
     let userId: User['id'] | undefined;
 
@@ -412,11 +421,15 @@ export class AuthService {
 
     user.password = password;
 
-    await this.sessionService.deleteByUserId({
-      userId: user.id,
+    await this.prisma.runInTransaction(async (tx) => {
+      await this.sessionService.deleteByUserId(
+        {
+          userId: user.id,
+        },
+        tx,
+      );
+      await this.usersService.update(user.id, user, tx);
     });
-
-    await this.usersService.update(user.id, user);
   }
 
   async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {

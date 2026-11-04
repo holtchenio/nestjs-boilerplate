@@ -1,3 +1,4 @@
+import { DbClient } from '../../../database/prisma.service';
 import { User } from '../../../users/domain/user';
 import { NullableType } from '../../../utils/types/nullable.type';
 import { Session } from '../../domain/session';
@@ -25,7 +26,14 @@ export abstract class SessionRepository {
 
   abstract deleteById(id: Session['id']): Promise<void>;
 
-  abstract deleteByUserId(conditions: { userId: User['id'] }): Promise<void>;
+  /**
+   * @param conditions
+   * @param db
+   */
+  abstract deleteByUserId(
+    conditions: { userId: User['id'] },
+    db?: DbClient,
+  ): Promise<void>;
 
   abstract deleteByUserIdWithExclude(conditions: {
     userId: User['id'];
