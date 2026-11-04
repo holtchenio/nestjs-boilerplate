@@ -36,10 +36,10 @@ trap cleanup EXIT
 source "$(dirname "$0")/_matrix.sh"
 run_matrix document
 
-npm run lint
-npm run build
+pnpm run lint
+pnpm run build
 
 docker compose -f "$COMPOSE_FILE" --env-file env-example-document -p "$COMPOSE_PROJECT" up -d --build
 
 docker compose -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT" exec api /opt/wait-for-it.sh -t 0 localhost:3001 -- \
-  npx jest --config test/jest-e2e.json --testPathIgnorePatterns=/node_modules/ --testPathPatterns=generators-document --runInBand
+  pnpm exec jest --config test/jest-e2e.json --testPathIgnorePatterns=/node_modules/ --testPathPatterns=generators-document --runInBand

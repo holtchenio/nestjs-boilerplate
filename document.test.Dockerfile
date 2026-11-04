@@ -1,10 +1,10 @@
 FROM node:24.14.1-alpine
 
 RUN apk add --no-cache bash
-RUN npm i -g @nestjs/cli typescript ts-node
+RUN corepack enable && corepack prepare pnpm@10.34.9 --activate
 
-COPY package*.json /tmp/app/
-RUN cd /tmp/app && npm install
+COPY package.json pnpm-lock.yaml .npmrc /tmp/app/
+RUN cd /tmp/app && pnpm install --frozen-lockfile
 
 COPY . /usr/src/app
 

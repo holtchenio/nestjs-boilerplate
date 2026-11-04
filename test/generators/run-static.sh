@@ -3,7 +3,7 @@
 # Static-checks orchestrator for the generator e2e suite (Phase 1).
 #
 # Runs the full matrix of generator commands for one DB variant, then
-# `npm run lint`, `npm run build`, and the file-assertion jest spec.
+# `pnpm run lint`, `pnpm run build`, and the file-assertion jest spec.
 # Bounded cleanup restores the source tree on exit, success or fail.
 #
 # Usage: bash test/generators/run-static.sh <relational|document>
@@ -39,7 +39,7 @@ trap cleanup EXIT
 source "$(dirname "$0")/_matrix.sh"
 run_matrix "$VARIANT"
 
-npm run lint
-npm run build
+pnpm run lint
+pnpm run build
 
-npx jest --config test/jest-e2e.json --testPathIgnorePatterns=/node_modules/ --testPathPatterns=generators-file-assertions --runInBand
+pnpm exec jest --config test/jest-e2e.json --testPathIgnorePatterns=/node_modules/ --testPathPatterns=generators-file-assertions --runInBand
