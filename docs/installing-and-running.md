@@ -1,216 +1,96 @@
 # Installation
 
-NestJS Boilerplate supports [TypeORM](https://www.npmjs.com/package/typeorm) and [Mongoose](https://www.npmjs.com/package/mongoose) for working with databases. By default, TypeORM uses [PostgreSQL](https://www.postgresql.org/) as the main database, but you can use any relational database.
-
-Switching between TypeORM and Mongoose is implemented based on the [Hexagonal Architecture](architecture.md#hexagonal-architecture). This makes it easy to choose the right database for your application.
+The API uses PostgreSQL through Prisma, Redis for cache, rate limits, and BullMQ, and Maildev for local mail. There is one package manager: pnpm.
 
 ---
 
 ## Table of Contents <!-- omit in toc -->
 
-- [Comfortable development (PostgreSQL + TypeORM)](#comfortable-development-postgresql--typeorm)
-  - [Video guideline (PostgreSQL + TypeORM)](#video-guideline-postgresql--typeorm)
-- [Comfortable development (MongoDB + Mongoose)](#comfortable-development-mongodb--mongoose)
-- [Quick run (PostgreSQL + TypeORM)](#quick-run-postgresql--typeorm)
-- [Quick run (MongoDB + Mongoose)](#quick-run-mongodb--mongoose)
+- [Development on the host](#development-on-the-host)
+- [Full stack in Docker](#full-stack-in-docker)
 - [Links](#links)
 
 ---
 
-## Comfortable development (PostgreSQL + TypeORM)
+## Development on the host
 
-1. Clone repository
+1. Clone the repository and enter it.
 
-   ```bash
-   git clone --depth 1 https://github.com/brocoders/nestjs-boilerplate.git my-app
-   ```
-
-1. Go to folder, and copy `env-example-relational` as `.env`.
+1. Copy the environment file.
 
    ```bash
-   cd my-app/
    cp env-example-relational .env
    ```
 
-1. Change `DATABASE_HOST=postgres` to `DATABASE_HOST=localhost`
-
-   Change `MAIL_HOST=maildev` to `MAIL_HOST=localhost`
-
-1. Run additional container:
+1. Point the host process at published ports:
 
    ```bash
-   docker compose up -d postgres adminer maildev
+   # .env
+   DATABASE_HOST=localhost
+   MAIL_HOST=localhost
+   REDIS_URL=redis://localhost:6379
    ```
 
-1. Install dependency
+   `DATABASE_HOST=postgres` and `MAIL_HOST=maildev` stay correct for containers. Do not point these at a production host.
+
+1. Start PostgreSQL, Redis, and Maildev.
 
    ```bash
-   npm install
+   docker compose up -d postgres redis maildev
    ```
 
-1. Run app configuration
-
-   > You should run this command only the first time on initialization of your project, all next time skip it.
-
-   > If you want to contribute to the boilerplate, you should NOT run this command.
+1. Install dependencies from the lockfile.
 
    ```bash
-   npm run app:config
+   pnpm install --frozen-lockfile
    ```
 
-1. Run migrations
+1. Apply migrations, then seed. Seeding is explicit. Starting the API does not seed.
 
    ```bash
-   npm run migration:run
+   pnpm exec prisma migrate deploy
+   pnpm exec prisma db seed
    ```
 
-1. Run seeds
+1. Start the API and the worker in two terminals.
 
    ```bash
-   npm run seed:run:relational
+   pnpm run start:dev
+   pnpm run start:worker:dev
    ```
 
-1. Run app in dev mode
+1. Open <http://localhost:3001/docs> and the mail UI at <http://localhost:1080>.
 
-   ```bash
-   npm run start:dev
-   ```
+`pnpm run app:config` renames the project the first time you copy this boilerplate. Skip it when contributing to this repository.
 
-1. Open <http://localhost:3001>
+## Full stack in Docker
 
-### Video guideline (PostgreSQL + TypeORM)
+`docker compose up --build` builds three targets from `Dockerfile`:
 
-<https://github.com/user-attachments/assets/136a16aa-f94a-4b20-8eaf-6b4262964315>
+- `migrator` runs `pnpm exec prisma migrate deploy` once and exits
+- `api` runs `node dist/main.js` as user `node`
+- `worker` runs `node dist/worker.js` as user `node`
 
----
+Seed is a separate profile:
 
-## Comfortable development (MongoDB + Mongoose)
+```bash
+docker compose --profile seed run --rm seed
+```
 
-1. Clone repository
+The production image sets `NODE_ENV=production`, so Swagger is not mounted. Use the host dev server when you need `/docs`.
 
-   ```bash
-   git clone --depth 1 https://github.com/brocoders/nestjs-boilerplate.git my-app
-   ```
+Live and ready:
 
-1. Go to folder, and copy `env-example-document` as `.env`.
+```bash
+curl -sf http://localhost:3001/api/health/live
+curl -sf http://localhost:3001/api/health/ready
+```
 
-   ```bash
-   cd my-app/
-   cp env-example-document .env
-   ```
+Stop the stack without deleting the database volume:
 
-1. Change `DATABASE_URL=mongodb://mongo:27017` to `DATABASE_URL=mongodb://localhost:27017`
-
-1. Run additional container:
-
-   ```bash
-   docker compose -f docker-compose.document.yaml up -d mongo mongo-express maildev
-   ```
-
-1. Install dependency
-
-   ```bash
-   npm install
-   ```
-
-1. Run app configuration
-
-   > You should run this command only the first time on initialization of your project, all next time skip it.
-
-   > If you want to contribute to the boilerplate, you should NOT run this command.
-
-   ```bash
-   npm run app:config
-   ```
-
-1. Run seeds
-
-   ```bash
-   npm run seed:run:document
-   ```
-
-1. Run app in dev mode
-
-   ```bash
-   npm run start:dev
-   ```
-
-1. Open <http://localhost:3001>
-
----
-
-## Quick run (PostgreSQL + TypeORM)
-
-If you want quick run your app, you can use following commands:
-
-1. Clone repository
-
-   ```bash
-   git clone --depth 1 https://github.com/brocoders/nestjs-boilerplate.git my-app
-   ```
-
-1. Go to folder, and copy `env-example-relational` as `.env`.
-
-   ```bash
-   cd my-app/
-   cp env-example-relational .env
-   ```
-
-1. Run containers
-
-   ```bash
-   docker compose up -d
-   ```
-
-1. For check status run
-
-   ```bash
-   docker compose logs
-   ```
-
-1. Open <http://localhost:3001>
-
----
-
-## Quick run (MongoDB + Mongoose)
-
-If you want quick run your app, you can use following commands:
-
-1. Clone repository
-
-   ```bash
-   git clone --depth 1 https://github.com/brocoders/nestjs-boilerplate.git my-app
-   ```
-
-1. Go to folder, and copy `env-example-document` as `.env`.
-
-   ```bash
-   cd my-app/
-   cp env-example-document .env
-   ```
-
-1. Run containers
-
-   ```bash
-   docker compose -f docker-compose.document.yaml up -d
-   ```
-
-1. For check status run
-
-   ```bash
-   docker compose -f docker-compose.document.yaml logs
-   ```
-
-1. Open <http://localhost:3001>
-
----
-
-## Links
-
-- Swagger (API docs): <http://localhost:3001/docs>
-- Adminer (client for DB): <http://localhost:8080>
-- MongoDB Express (client for DB): <http://localhost:8081/>
-- Maildev: <http://localhost:1080>
+```bash
+docker compose down
+```
 
 ---
 

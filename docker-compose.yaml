@@ -9,14 +9,22 @@ services:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   maildev:
-    build:
-      context: .
-      dockerfile: maildev.Dockerfile
+    image: maildev/maildev:2.1.0
     ports:
       - ${MAIL_CLIENT_PORT}:1080
       - ${MAIL_PORT}:1025
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '-', 'http://127.0.0.1:1080']
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   adminer:
     image: adminer
@@ -28,13 +36,93 @@ services:
     image: redis:8.2.11-alpine
     ports:
       - 6379:6379
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    env_file:
+      - env-example-relational
+    environment:
+      DATABASE_HOST: postgres
+      REDIS_URL: redis://redis:6379
+      MAIL_HOST: maildev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
+      target: api
     ports:
       - ${APP_PORT}:${APP_PORT}
+    env_file:
+      - env-example-relational
+    environment:
+      DATABASE_HOST: postgres
+      REDIS_URL: redis://redis:6379
+      MAIL_HOST: maildev
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:'+(process.env.APP_PORT||3001)+'/api/health/live').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    env_file:
+      - env-example-relational
+    environment:
+      DATABASE_HOST: postgres
+      REDIS_URL: redis://redis:6379
+      MAIL_HOST: maildev
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  seed:
+    profiles: ['seed']
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    env_file:
+      - env-example-relational
+    environment:
+      DATABASE_HOST: postgres
+      REDIS_URL: redis://redis:6379
+      MAIL_HOST: maildev
+    command: ['pnpm', 'exec', 'prisma', 'db', 'seed']
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    restart: 'no'
 
 volumes:
   boilerplate-db:

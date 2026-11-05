@@ -2,37 +2,35 @@
 
 ## Table of Contents <!-- omit in toc -->
 
-- [Unit Tests](#unit-tests)
-- [E2E Tests](#e2e-tests)
-- [Tests in Docker](#tests-in-docker)
-  - [For relational database](#for-relational-database)
-  - [For document database](#for-document-database)
+- [Unit tests](#unit-tests)
+- [E2E tests](#e2e-tests)
+- [Docker](#docker)
 
-## Unit Tests
+## Unit tests
 
 ```bash
-npm run test
+pnpm test
 ```
 
-## E2E Tests
+## E2E tests
+
+PostgreSQL, Redis, and Maildev must already be running, and the API and worker must be up. See [Installing and Running](installing-and-running.md).
 
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
-## Tests in Docker
+`pnpm run test:e2e` loads `.env` through env-cmd. That file overrides variables already set in the shell.
 
-### For relational database
+## Docker
+
+Bring up the compose stack, then run e2e from the host against the published API port:
 
 ```bash
-npm run test:e2e:relational:docker
+pnpm run test:e2e:relational:docker
 ```
 
-### For document database
-
-```bash
-npm run test:e2e:document:docker
-```
+This starts the containers and does not delete the database volume.
 
 ---
 

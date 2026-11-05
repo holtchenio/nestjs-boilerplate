@@ -1,0 +1,217 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Format
+        run: pnpm exec prettier --check "src/**/*.ts" "test/**/*.ts"
+      - name: Lint
+        run: pnpm run lint
+      - name: Typecheck
+        run: pnpm run typecheck
+      - name: Validate Prisma schema
+        run: pnpm exec prisma validate
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm test
+
+  drift:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: api
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U root -d api"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Migration drift
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: root
+          DATABASE_PASSWORD: secret
+          DATABASE_NAME: api
+          SHADOW_DATABASE_URL: postgresql://root:secret@localhost:5432/prisma_shadow
+        run: pnpm exec prisma migrate diff --exit-code --from-migrations prisma/migrations --to-schema prisma/schema.prisma
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: api
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U root -d api"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8.2.11-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      maildev:
+        image: maildev/maildev:2.1.0
+        ports:
+          - 1080:1080
+          - 1025:1025
+    env:
+      NODE_ENV: test
+      APP_PORT: 3001
+      APP_NAME: NestJS API
+      API_PREFIX: api
+      APP_FALLBACK_LANGUAGE: en
+      APP_HEADER_LANGUAGE: x-custom-lang
+      FRONTEND_DOMAIN: http://localhost:3000
+      BACKEND_DOMAIN: http://localhost:3001
+      APP_CORS_ORIGINS: http://localhost:3000
+      DATABASE_TYPE: postgres
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: secret
+      DATABASE_NAME: api
+      DATABASE_SYNCHRONIZE: false
+      DATABASE_MAX_CONNECTIONS: 100
+      DATABASE_SSL_ENABLED: false
+      FILE_DRIVER: local
+      MAIL_HOST: localhost
+      MAIL_PORT: 1025
+      MAIL_IGNORE_TLS: true
+      MAIL_SECURE: false
+      MAIL_REQUIRE_TLS: false
+      MAIL_DEFAULT_EMAIL: noreply@example.com
+      MAIL_DEFAULT_NAME: Api
+      MAIL_CLIENT_PORT: 1080
+      AUTH_JWT_SECRET: secret
+      AUTH_JWT_TOKEN_EXPIRES_IN: 15m
+      AUTH_REFRESH_SECRET: secret_for_refresh
+      AUTH_REFRESH_TOKEN_EXPIRES_IN: 30d
+      AUTH_FORGOT_SECRET: secret_for_forgot
+      AUTH_FORGOT_TOKEN_EXPIRES_IN: 30m
+      AUTH_CONFIRM_EMAIL_SECRET: secret_for_confirm_email
+      AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN: 1d
+      AUTH_UNIFORM_ERRORS: true
+      AUTH_SESSION_CHECK: true
+      AUTH_REFRESH_REUSE_GRACE_SECONDS: 0
+      AUTH_COOKIE_ENABLED: true
+      AUTH_COOKIE_SAMESITE: Lax
+      AUTH_JWT_SECRET_KID: current
+      AUTH_THROTTLE_LIMIT: 1000
+      AUTH_LOGIN_FAIL_LIMIT: 10
+      APPLE_APP_AUDIENCE: '[]'
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Migrate and seed
+        run: |
+          pnpm exec prisma migrate deploy
+          pnpm exec prisma db seed
+      - name: Start API and worker
+        run: |
+          pnpm run build
+          node dist/worker.js > worker.log 2>&1 &
+          node dist/main.js > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3001/api/health/ready; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'API did not become ready' >&2
+          cat api.log >&2
+          exit 1
+      - name: E2E
+        run: pnpm exec vitest run --config vitest.e2e.config.ts
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build api, worker, and migrator
+        run: |
+          docker build --target api -t boilerplate-api .
+          docker build --target worker -t boilerplate-worker .
+          docker build --target migrator -t boilerplate-migrator .
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Audit production dependencies
+        continue-on-error: true
+        run: pnpm audit --prod

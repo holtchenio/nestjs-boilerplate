@@ -497,4 +497,5 @@
 | T3.7 | dev/test/ci 启动脚本等待 Redis、执行 Prisma 迁移并拉起 Worker。`tests` 项目里的关系型 Docker e2e 为 23 项通过 |
 | T5.0–T5.6 | 已切到 ESM。`prisma generate` 使用 `moduleFormat=esm` 后 `nest build` 成功。`node dist/main.js` 监听成功，`node dist/worker.js` 完成装载。Redis 队列一发一收返回 echo。Vitest 单元 22 项、e2e 27 项通过。`.hygen.js` 改为具名导出后，`hygen generate relational-resource` 能生成并已清理探针文件。属性生成器钩子改为 `prompt.cjs` |
 | T6.1–T6.7 | 已完成。领域对象不再带序列化装饰器。文件 URL 在响应前解析。未知错误响应不含堆栈。满页 `hasNextPage` 为 false。上传校验文件头。孤儿文件行由 Worker 每小时清理。生产环境不挂 Swagger。Hygen 探针 `SpikeProbe` 已生成、编译并删除。单元测试 35 项、e2e 28 项通过 |
-| T7.1 至 T7.5 | 未开始 |
+| T7.1–T7.4 | 已完成。多阶段镜像的 api / worker / migrator 都以 `node` 用户运行。迁移是一次性服务，seed 在 profile `seed`。CI 见 `.github/workflows/ci.yml`。空库 `stage7_drill` 完成 frozen install、migrate、seed、单元测试 35 项和 e2e 28 项，演练后已删除 |
+| T7.5 | 清单已写入 `docs/modernization/ACCEPTANCE.md`。已有库 baseline 与 `pnpm audit --prod` 未勾选。等待人工确认后才算改造结束 |

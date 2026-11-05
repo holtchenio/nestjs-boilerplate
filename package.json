@@ -26,6 +26,7 @@
     "start:worker:dev": "nest start --watch --entryFile worker",
     "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "typecheck": "tsc --noEmit --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
@@ -33,7 +34,7 @@
     "test:e2e": "env-cmd -- vitest run --config vitest.e2e.config.ts",
     "test:generators:relational": "bash test/generators/run-static.sh relational",
     "test:e2e:generators:relational:docker": "bash test/generators/run-crud-relational.sh",
-    "test:e2e:relational:docker": "docker compose -f docker-compose.relational.test.yaml --env-file env-example-relational -p tests up -d --build && docker compose -f docker-compose.relational.test.yaml -p tests exec api /opt/wait-for-it.sh -t 0 localhost:3001 -- pnpm exec env-cmd -- vitest run --config vitest.e2e.config.ts && docker compose -f docker-compose.relational.test.yaml -p tests down && docker compose -p tests rm -svf",
+    "test:e2e:relational:docker": "docker compose up -d --build --wait && pnpm run test:e2e",
     "prepare": "is-ci || husky",
     "release": "release-it"
   },

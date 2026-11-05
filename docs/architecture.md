@@ -37,22 +37,9 @@ The main reason for using Hexagonal Architecture is to separate the business log
 │   └── update.dto.ts
 ├── infrastructure
 │   └── persistence
-│       ├── document
-│       │   ├── document-persistence.module.ts
-│       │   ├── entities
-│       │   │   └── [SCHEMA].ts
-│       │   ├── mappers
-│       │   │   └── [MAPPER].ts
-│       │   └── repositories
-│       │       └── [ADAPTER].repository.ts
-│       ├── relational
-│       │   ├── entities
-│       │   │   └── [ENTITY].ts
-│       │   ├── mappers
-│       │   │   └── [MAPPER].ts
-│       │   ├── relational-persistence.module.ts
-│       │   └── repositories
-│       │       └── [ADAPTER].repository.ts
+│       ├── prisma
+│       │   ├── prisma-persistence.module.ts
+│       │   └── [ADAPTER].repository.ts
 │       └── [PORT].repository.ts
 ├── controller.ts
 ├── module.ts
@@ -61,11 +48,7 @@ The main reason for using Hexagonal Architecture is to separate the business log
 
 `[DOMAIN ENTITY].ts` represents an entity used in the business logic. Domain entity has no dependencies on the database or any other infrastructure.
 
-`[SCHEMA].ts` represents the **database structure**. It is used in the document-oriented database (MongoDB).
-
-`[ENTITY].ts` represents the **database structure**. It is used in the relational database (PostgreSQL).
-
-`[MAPPER].ts` is a mapper that converts **database entity** to **domain entity** and vice versa.
+The Prisma model in `prisma/schema.prisma` is the database structure. The Prisma repository maps rows to the domain entity.
 
 `[PORT].repository.ts` is a repository **port** that defines the methods for interacting with the database.
 

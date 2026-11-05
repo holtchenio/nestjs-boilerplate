@@ -174,7 +174,7 @@ sequenceDiagram
 
 ## How to delete files?
 
-We prefer not to delete files, as this may have negative experience during restoring data. Also for this reason we also use [Soft-Delete](https://orkhan.gitbook.io/typeorm/docs/delete-query-builder#soft-delete) approach in database. However, if you need to delete files you can create your own handler, cronjob, etc.
+We prefer not to delete stored objects during a normal request. The worker deletes unreferenced `file` rows older than 24 hours. It does not delete the object in local disk or S3. Users are soft-deleted by setting `deletedAt`.
 
 ---
 

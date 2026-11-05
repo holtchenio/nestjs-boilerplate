@@ -2,64 +2,50 @@
 
 本文件为 Claude Code（claude.ai/code）在此仓库中工作时提供指导。
 
-这是一个 NestJS 样板项目，在单一代码库中同时支持关系型（TypeORM/PostgreSQL）和文档型（Mongoose/MongoDB）持久化。
+这是一个 NestJS 样板项目。业务库只有 PostgreSQL，ORM 只有 Prisma。Redis 负责缓存、限流和 BullMQ。API 与 Worker 是两个入口。
 
 @AGENTS.md
 
 ## 常用命令
 
-使用 `npm`（`package-lock.json` 已提交；忽略未跟踪的 `pnpm-lock.yaml`）。Node 版本固定在 `.nvmrc`（24.x）。
+只用 pnpm。锁文件是 `pnpm-lock.yaml`。不要再引入 npm 锁文件。Node 版本固定在 `.nvmrc`（24.x）。
 
 ```bash
-npm run start:dev        # 开发服务器（监听模式，默认端口 3001）
-npm run build            # 编译到 dist/
-npm run lint             # 对 {src,apps,libs,test}/**/*.ts 执行 eslint
-npm run format           # 对 src/ 和 test/ 执行 prettier --write
-
-pnpm test                # 单元测试（vitest，include 为 src/**/*.spec.ts）
-npm run test -- <path>   # 运行单个测试文件，例如 npm run test -- users/users.service.spec.ts
-npm run test:cov         # 带覆盖率的单元测试
-npm run test:e2e         # e2e 测试（需要运行中的数据库）
+pnpm run start:dev        # API，监听模式，默认端口 3001
+pnpm run start:worker:dev # Worker
+pnpm run build            # 编译到 dist/
+pnpm run lint
+pnpm run typecheck
+pnpm test                 # 单元测试（vitest，include 为 src/**/*.spec.ts）
+pnpm run test:e2e         # e2e，需要已启动的数据库、Redis、API 和 Worker
 ```
 
-### 数据库（关系型 / TypeORM）
+### 数据库（Prisma / PostgreSQL）
 
 ```bash
-npm run migration:generate -- src/database/migrations/<Name>  # 根据实体差异生成迁移
-npm run migration:run                                        # 执行迁移
-npm run migration:revert                                     # 回滚迁移
-npm run schema:drop                                          # 删除所有表
-npm run seed:run:relational                                  # 运行关系型种子数据
-npm run seed:create:relational -- --name <Entity>            # 生成种子文件骨架
+pnpm exec prisma migrate deploy
+pnpm exec prisma migrate dev --name <Change>
+pnpm exec prisma db seed
+pnpm run seed:create:relational -- --name <Entity>
 ```
 
-### 数据库（文档型 / Mongoose）
-
-```bash
-npm run seed:run:document
-npm run seed:create:document -- --name <Entity>
-```
+不要使用 `prisma migrate reset` 清理仍需保留的库。
 
 ### 代码生成
 
-项目通过 Hygen 生成器保持两种数据库实现、DTO、模块和迁移的同步。新增实体/schema 或属性时，请使用 `generate` skill（自动从 `.claude/skills/generate/SKILL.md` 加载）——不要手写实体/schema 文件。相关命令为 `npm run generate:resource:*` 和 `npm run add:property:to-*`。
+新增实体或属性时使用 `generate` skill。命令是 `pnpm run generate:resource:relational` 和 `pnpm run add:property:to-relational`。它们生成 Prisma 模块，不生成第二种数据库。
 
 ## 架构
 
 应用遵循**六边形架构（端口与适配器）**：业务逻辑位于 `domain` 层，不依赖数据库或其他基础设施；所有基础设施关注点都封装在端口接口之后，可通过适配器替换。详细文档位于 `docs/`（从 `docs/architecture.md` 开始）。
 
-### 双数据库机制
+### 持久化
 
-使用哪种数据库由 `DATABASE_TYPE` 环境变量在运行时决定：当 `DATABASE_TYPE` 为 `mongodb` 时，`databaseConfig` 将 `isDocumentDatabase` 置为 `true`，否则为 `false`。每个需要持久化的模块都通过形如 `// <database-block>` 的注释区域，根据该标志切换适配器，例如在 `src/app.module.ts` 和各个 `*.module.ts` 中：
+每个需要持久化的模块只绑定 Prisma 适配器：
 
 ```ts
-const infrastructurePersistenceModule = (databaseConfig() as DatabaseConfig)
-  .isDocumentDatabase
-  ? DocumentUserPersistenceModule
-  : RelationalUserPersistenceModule;
+const infrastructurePersistenceModule = PrismaUserPersistenceModule;
 ```
-
-这些 `// <database-block>` 标记是 Hygen 生成器重写的位置——手动编辑时请保持它们完整。
 
 ### 单个领域模块的结构
 
@@ -68,11 +54,11 @@ const infrastructurePersistenceModule = (databaseConfig() as DatabaseConfig)
 ```
 domain/                          # 与框架/数据库无关的实体
 dto/                             # 使用 class-validator + Swagger 的请求 DTO
+presenters/                      # 响应形状（用户模块）
 infrastructure/persistence/
-  <name>.repository.ts           # 端口（抽象类 / 接口）
-  relational/                    # TypeORM 适配器：entities/、mappers/、repositories/、relational-persistence.module.ts
-  document/                      # Mongoose 适配器：entities/*.schema.ts、mappers/、repositories/、document-persistence.module.ts
-<name>.module.ts                 # 装配 controller + service 及选中的持久化模块
+  <name>.repository.ts           # 端口（抽象类）
+  prisma/                        # Prisma 适配器
+<name>.module.ts
 <name>.controller.ts
 <name>.service.ts
 ```
@@ -104,4 +90,4 @@ infrastructure/persistence/
 
 ## 环境
 
-将 `env-example-relational` 或 `env-example-document` 复制为 `.env`（具体运行/初始化步骤和 Docker 服务见 `docs/installing-and-running.md`）。关键值：`DATABASE_TYPE` 选择持久化适配器；`FILE_DRIVER` 选择上传存储；邮件通过 Maildev 发送（`MAIL_HOST=maildev`，UI 地址 `http://localhost:1080`）。
+将 `env-example-relational` 复制为 `.env`。宿主机开发时把 `DATABASE_HOST` 和 `MAIL_HOST` 改成 `localhost`，`REDIS_URL` 改成 `redis://localhost:6379`。容器内保持 `postgres`、`maildev` 和 `redis://redis:6379`。不要把这些地址指到生产库。步骤见 `docs/installing-and-running.md`。
