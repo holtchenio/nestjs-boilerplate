@@ -5,8 +5,8 @@ export class LoginResponseDto {
   @ApiProperty()
   token: string;
 
-  @ApiProperty()
-  refreshToken: string;
+  @ApiProperty({ required: false })
+  refreshToken?: string;
 
   @ApiProperty()
   tokenExpires: number;

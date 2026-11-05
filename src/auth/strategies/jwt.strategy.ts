@@ -2,11 +2,13 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { resolveAccessSecret } from '../access-token-secret';
 import { OrNeverType } from '../../utils/types/or-never.type';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { AllConfigType } from '../../config/config.type';
 import { SessionService } from '../../session/session.service';
-import { SessionRevocationCache } from '../session-revocation.cache';
+import { SessionRevocationCache } from '../../session/session-revocation.cache';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -14,11 +16,26 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly configService: ConfigService<AllConfigType>,
     private readonly sessionService: SessionService,
     private readonly revocation: SessionRevocationCache,
+    jwtService: JwtService,
   ) {
+    const keyring = {
+      currentKid: configService.getOrThrow('auth.accessKid', { infer: true }),
+      currentSecret: configService.getOrThrow('auth.secret', { infer: true }),
+      previous: configService.getOrThrow('auth.previousSecrets', {
+        infer: true,
+      }),
+    };
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.getOrThrow('auth.secret', { infer: true }),
       algorithms: ['HS256'],
+      secretOrKeyProvider: (_request, rawToken, done) => {
+        const secret = resolveAccessSecret(rawToken, keyring, jwtService);
+        if (!secret) {
+          done(new Error('Access token is missing a known kid'));
+          return;
+        }
+        done(null, secret);
+      },
     });
   }
 

@@ -5,7 +5,9 @@ import {
   HttpStatus,
   Post,
   SerializeOptions,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
 import { AuthFacebookService } from './auth-facebook.service';
@@ -30,6 +32,7 @@ export class AuthFacebookController {
     groups: ['me'],
   })
   @Post('login')
+  @UseGuards(ThrottlerGuard)
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: AuthFacebookLoginDto,

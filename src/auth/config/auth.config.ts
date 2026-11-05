@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import validateConfig from '../../utils/validate-config';
 import { AuthConfig } from './auth-config.type';
+import { parsePreviousSecrets } from '../access-token-secret';
 import ms from 'ms';
 
 const PLACEHOLDER_SECRETS = {
@@ -72,6 +73,46 @@ class EnvironmentVariablesValidator {
   @IsNumberString()
   @IsOptional()
   AUTH_REFRESH_REUSE_GRACE_SECONDS: string;
+
+  @IsBooleanString()
+  @IsOptional()
+  AUTH_COOKIE_ENABLED: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_COOKIE_SAMESITE: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_JWT_SECRET_KID: string;
+
+  @IsString()
+  @IsOptional()
+  AUTH_JWT_PREVIOUS_SECRETS: string;
+
+  @IsNumberString()
+  @IsOptional()
+  AUTH_THROTTLE_LIMIT: string;
+
+  @IsNumberString()
+  @IsOptional()
+  AUTH_LOGIN_FAIL_LIMIT: string;
+}
+
+/**
+ * SameSite=None 必须带 Secure。非生产环境不发 Secure，因此拒绝这个组合。
+ */
+function cookieSameSite(): 'Lax' | 'Strict' | 'None' {
+  const sameSite = process.env.AUTH_COOKIE_SAMESITE ?? 'Lax';
+  if (sameSite !== 'Lax' && sameSite !== 'Strict' && sameSite !== 'None') {
+    throw new Error('AUTH_COOKIE_SAMESITE must be Lax, Strict, or None');
+  }
+  if (sameSite === 'None' && process.env.NODE_ENV !== 'production') {
+    throw new Error(
+      'AUTH_COOKIE_SAMESITE=None requires production so the cookie is Secure',
+    );
+  }
+  return sameSite;
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -93,5 +134,13 @@ export default registerAs<AuthConfig>('auth', () => {
     reuseGraceSeconds: Number(
       process.env.AUTH_REFRESH_REUSE_GRACE_SECONDS ?? '0',
     ),
+    cookieEnabled: process.env.AUTH_COOKIE_ENABLED === 'true',
+    cookieSameSite: cookieSameSite(),
+    accessKid: process.env.AUTH_JWT_SECRET_KID || 'current',
+    previousSecrets: parsePreviousSecrets(
+      process.env.AUTH_JWT_PREVIOUS_SECRETS,
+    ),
+    throttleLimit: Number(process.env.AUTH_THROTTLE_LIMIT ?? '10'),
+    loginFailLimit: Number(process.env.AUTH_LOGIN_FAIL_LIMIT ?? '10'),
   };
 });

@@ -8,6 +8,7 @@ import {
   RefreshTokenRecord,
   SessionDraft,
   SessionRepository,
+  SessionSummary,
 } from './infrastructure/persistence/session.repository';
 
 @Injectable()
@@ -135,5 +136,27 @@ export class SessionService {
    */
   recordAudit(event: AuditEventDraft, db?: DbClient): Promise<void> {
     return this.sessionRepository.recordAudit(event, db);
+  }
+
+  /**
+   * @param userId
+   */
+  listActiveByUserId(userId: number): Promise<SessionSummary[]> {
+    return this.sessionRepository.listActiveByUserId(userId);
+  }
+
+  /**
+   * @param userId
+   * @param sessionId
+   * @param reason
+   * @param db
+   */
+  revokeOwned(
+    userId: number,
+    sessionId: string,
+    reason: string,
+    db?: DbClient,
+  ): Promise<boolean> {
+    return this.sessionRepository.revokeOwned(userId, sessionId, reason, db);
   }
 }

@@ -188,7 +188,9 @@ const request = context
 
 ## Refresh token flow
 
-1. On sign in (`POST /api/v1/auth/email/login`) you will receive `token`, `tokenExpires` and `refreshToken` in response.
+1. On sign in (`POST /api/v1/auth/email/login`) you will receive `token`, `tokenExpires` and `refreshToken` in response. Existing clients must sign in again: refresh tokens issued before this change are rejected, and logout makes the current access token return 401 immediately. The access token header includes `kid`. Tokens without `kid` are rejected. `GET /api/v1/auth/sessions` lists the current user's sessions, `DELETE /api/v1/auth/sessions/:id` revokes one, and `POST /api/v1/auth/logout/all` revokes all of them.
+
+   When `AUTH_COOKIE_ENABLED=true`, send `x-auth-mode: cookie` to receive `refresh_token` (HttpOnly, path `/api/v1/auth`) and `csrf_token` cookies instead of `refreshToken` in JSON. Refresh and logout in that mode require `X-CSRF-Token` plus an `Origin` listed in `APP_CORS_ORIGINS`. Requests without that header stay on Bearer tokens. The sample env enables the cookie switch; production rate limit starts at 10 requests per minute (`AUTH_THROTTLE_LIMIT`).
 1. On each regular request you need to send `token` in `Authorization` header.
 1. If `token` is expired (check with `tokenExpires` property on client app) you need to send `refreshToken` to `POST /api/v1/auth/refresh` in `Authorization` header to refresh `token`. You will receive new `token`, `tokenExpires` and `refreshToken` in response.
 

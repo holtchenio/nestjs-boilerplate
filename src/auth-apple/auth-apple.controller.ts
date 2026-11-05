@@ -5,7 +5,9 @@ import {
   HttpStatus,
   Post,
   SerializeOptions,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
 import { AuthAppleService } from './auth-apple.service';
@@ -30,6 +32,7 @@ export class AuthAppleController {
     groups: ['me'],
   })
   @Post('login')
+  @UseGuards(ThrottlerGuard)
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: AuthAppleLoginDto): Promise<LoginResponseDto> {
     const socialData = await this.authAppleService.getProfileByToken(loginDto);

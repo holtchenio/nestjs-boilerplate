@@ -2,7 +2,8 @@ import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
 import { MailQueueService } from '../queue/mail-queue.service';
-import { SessionRevocationCache } from './session-revocation.cache';
+import { SessionRevocationCache } from '../session/session-revocation.cache';
+import { LoginAttemptService } from './login-attempt';
 import { SessionService } from '../session/session.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -55,6 +56,11 @@ describe('AuthService.resetPassword', () => {
         prisma,
         { enqueue: jest.fn() } as unknown as MailQueueService,
         { revoke: jest.fn() } as unknown as SessionRevocationCache,
+        {
+          assertAllowed: jest.fn(),
+          recordFailure: jest.fn(),
+          clear: jest.fn(),
+        } as unknown as LoginAttemptService,
       ),
       session,
     };
@@ -104,6 +110,11 @@ describe('AuthService.register', () => {
       {} as PrismaService,
       { enqueue } as unknown as MailQueueService,
       { revoke: jest.fn() } as unknown as SessionRevocationCache,
+      {
+        assertAllowed: jest.fn(),
+        recordFailure: jest.fn(),
+        clear: jest.fn(),
+      } as unknown as LoginAttemptService,
     );
 
     await auth.register(
@@ -158,6 +169,11 @@ describe('AuthService.refreshToken', () => {
       } as unknown as PrismaService,
       {} as MailQueueService,
       { revoke: jest.fn() } as unknown as SessionRevocationCache,
+      {
+        assertAllowed: jest.fn(),
+        recordFailure: jest.fn(),
+        clear: jest.fn(),
+      } as unknown as LoginAttemptService,
     );
 
     await expect(auth.refreshToken('plain-token')).rejects.toBeInstanceOf(

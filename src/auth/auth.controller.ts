@@ -10,7 +10,12 @@ import {
   Patch,
   Delete,
   SerializeOptions,
+  Param,
+  ParseUUIDPipe,
+  Res,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
@@ -27,10 +32,15 @@ import { RefreshResponseDto } from './dto/refresh-response.dto';
 import type { RequestWithUser } from '../utils/types/request-with-user.type';
 import type { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import { I18nContext } from 'nestjs-i18n';
+import { ConfigService } from '@nestjs/config';
+import { AllConfigType } from '../config/config.type';
 import {
   RefreshTokenGuard,
   RequestWithRefreshToken,
 } from './guards/refresh-token.guard';
+import { AuthCookies } from './auth-cookies';
+import { AuthClientContext } from './auth.service';
+import { CookieCsrfGuard } from './guards/cookie-csrf.guard';
 
 @ApiTags('Auth')
 @Controller({
@@ -38,21 +48,36 @@ import {
   version: '1',
 })
 export class AuthController {
-  constructor(private readonly service: AuthService) {}
+  constructor(
+    private readonly service: AuthService,
+    private readonly cookies: AuthCookies,
+    private readonly configService: ConfigService<AllConfigType>,
+  ) {}
 
   @SerializeOptions({
     groups: ['me'],
   })
   @Post('email/login')
+  @UseGuards(ThrottlerGuard)
   @ApiOkResponse({
     type: LoginResponseDto,
   })
   @HttpCode(HttpStatus.OK)
-  public login(@Body() loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
-    return this.service.validateLogin(loginDto);
+  public async login(
+    @Body() loginDto: AuthEmailLoginDto,
+    @Request() request: RequestWithRefreshToken,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LoginResponseDto> {
+    const result = await this.service.validateLogin(loginDto, {
+      ...clientContext(request),
+      deviceName: loginDto.deviceName,
+      deviceType: loginDto.deviceType,
+    });
+    return this.presentLogin(result, request, response);
   }
 
   @Post('email/register')
+  @UseGuards(ThrottlerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
     return this.service.register(createUserDto, I18nContext.current()?.lang);
@@ -75,6 +100,7 @@ export class AuthController {
   }
 
   @Post('forgot/password')
+  @UseGuards(ThrottlerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(
     @Body() forgotPasswordDto: AuthForgotPasswordDto,
@@ -86,6 +112,7 @@ export class AuthController {
   }
 
   @Post('reset/password')
+  @UseGuards(ThrottlerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto): Promise<void> {
     return this.service.resetPassword(
@@ -118,25 +145,76 @@ export class AuthController {
     groups: ['me'],
   })
   @Post('refresh')
-  @UseGuards(RefreshTokenGuard)
+  @UseGuards(ThrottlerGuard, RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
-  public refresh(
+  public async refresh(
     @Request() request: RequestWithRefreshToken,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<RefreshResponseDto> {
-    return this.service.refreshToken(request.refreshToken ?? '');
+    const result = await this.service.refreshToken(request.refreshToken ?? '');
+    if (!this.cookieMode(request) || !result.refreshToken) {
+      return result;
+    }
+    this.cookies.write(response, result.refreshToken);
+    const { refreshToken, ...rest } = result;
+    void refreshToken;
+    return rest;
   }
 
   @ApiBearerAuth()
   @Post('logout')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), CookieCsrfGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async logout(
-    @Request() request: RequestWithUser<JwtPayloadType>,
+    @Request()
+    request: RequestWithUser<JwtPayloadType> & RequestWithRefreshToken,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
     await this.service.logout({
       id: request.user.id,
       sessionId: request.user.sessionId,
     });
+    if (this.cookieMode(request)) {
+      this.cookies.clear(response);
+    }
+  }
+
+  @ApiBearerAuth()
+  @Get('sessions')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  public sessions(@Request() request: RequestWithUser<JwtPayloadType>) {
+    return this.service.listSessions(request.user.id, request.user.sessionId);
+  }
+
+  @ApiBearerAuth()
+  @Delete('sessions/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async revokeSession(
+    @Request() request: RequestWithUser<JwtPayloadType>,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    await this.service.revokeOwnSession(request.user.id, id);
+  }
+
+  @ApiBearerAuth()
+  @Post('logout/all')
+  @UseGuards(AuthGuard('jwt'), CookieCsrfGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async logoutAll(
+    @Request()
+    request: RequestWithUser<JwtPayloadType> & RequestWithRefreshToken,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<void> {
+    await this.service.revokeAllSessions(
+      request.user.id,
+      'logout_all',
+      'logout_all',
+    );
+    if (this.cookieMode(request)) {
+      this.cookies.clear(response);
+    }
   }
 
   @ApiBearerAuth()
@@ -169,4 +247,47 @@ export class AuthController {
   ): Promise<void> {
     return this.service.softDelete(request.user);
   }
+
+  /**
+   * Cookie 模式不把刷新令牌放进 JSON。
+   * @param result
+   * @param request
+   * @param response
+   */
+  private presentLogin(
+    result: LoginResponseDto,
+    request: RequestWithRefreshToken,
+    response: Response,
+  ): LoginResponseDto {
+    if (!this.cookieMode(request) || !result.refreshToken) {
+      return result;
+    }
+    this.cookies.write(response, result.refreshToken);
+    const { refreshToken, ...rest } = result;
+    void refreshToken;
+    return rest;
+  }
+
+  /**
+   * @param request
+   */
+  private cookieMode(request: RequestWithRefreshToken): boolean {
+    return (
+      this.configService.getOrThrow('auth.cookieEnabled', { infer: true }) &&
+      request.headers['x-auth-mode'] === 'cookie'
+    );
+  }
+}
+
+/**
+ * 从请求头取出设备和网络信息。不把这些值当作安全判断的唯一依据。
+ * @param request
+ */
+function clientContext(request: RequestWithRefreshToken): AuthClientContext {
+  const forwarded = request.headers['x-forwarded-for'];
+  const headerIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  return {
+    userAgent: request.headers['user-agent'] ?? null,
+    ip: headerIp?.split(',')[0]?.trim() || null,
+  };
 }

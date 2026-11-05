@@ -15,6 +15,8 @@ import { PrismaModule } from './database/prisma.module';
 import fileConfig from './files/config/file.config';
 import { loggerModuleParams } from './logger/logger.options';
 import mailConfig from './mail/config/mail.config';
+import { authThrottlerModule } from './cache/redis-throttler.storage';
+import { RedisModule } from './cache/redis.module';
 import { QueueModule } from './queue/queue.module';
 import { MailWorkerModule } from './workers/mail/mail-worker.module';
 
@@ -36,6 +38,8 @@ import { MailWorkerModule } from './workers/mail/mail-worker.module';
       envFilePath: ['.env'],
     }),
     LoggerModule.forRoot(loggerModuleParams()),
+    RedisModule,
+    authThrottlerModule(),
     PrismaModule,
     QueueModule,
     I18nModule.forRootAsync({

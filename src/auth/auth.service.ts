@@ -29,7 +29,11 @@ import { MailQueueService } from '../queue/mail-queue.service';
 import { RefreshTokenRecord } from '../session/infrastructure/persistence/session.repository';
 import { forgotPasswordSecret } from './forgot-password-secret';
 import { createRefreshToken, refreshTokenHash } from './refresh-token';
-import { SessionRevocationCache } from './session-revocation.cache';
+import { SessionRevocationCache } from '../session/session-revocation.cache';
+import { SessionDraft } from '../session/infrastructure/persistence/session.repository';
+import { LoginAttemptService } from './login-attempt';
+
+export type AuthClientContext = Omit<SessionDraft, 'user' | 'expiresAt'>;
 
 @Injectable()
 export class AuthService {
@@ -41,12 +45,23 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly mailQueue: MailQueueService,
     private readonly revocation: SessionRevocationCache,
+    private readonly loginAttempts: LoginAttemptService,
   ) {}
 
-  async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
+  /**
+   * @param loginDto
+   * @param context
+   */
+  async validateLogin(
+    loginDto: AuthEmailLoginDto,
+    context: AuthClientContext = {},
+  ): Promise<LoginResponseDto> {
+    const ip = context.ip || 'unknown';
+    await this.loginAttempts.assertAllowed(loginDto.email, ip);
     const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
+      await this.loginAttempts.recordFailure(loginDto.email, ip);
       throw this.invalidLoginException({
         email: 'notFound',
       });
@@ -70,12 +85,18 @@ export class AuthService {
     );
 
     if (!isValidPassword) {
+      await this.loginAttempts.recordFailure(loginDto.email, ip);
       throw this.invalidLoginException({
         password: 'incorrectPassword',
       });
     }
 
-    const { session, refreshToken } = await this.issueSession(user);
+    await this.loginAttempts.clear(loginDto.email, ip);
+    const { session, refreshToken } = await this.issueSession(user, {
+      ...context,
+      deviceName: loginDto.deviceName,
+      deviceType: loginDto.deviceType,
+    });
     const { token, tokenExpires } = await this.getTokensData({
       id: user.id,
       role: user.role,
@@ -635,6 +656,78 @@ export class AuthService {
    * 撤销当前会话，并让尚未过期的 access token 立即失效。
    * @param data
    */
+  /**
+   * 当前用户尚未撤销的会话。current 标记这次请求自己的会话。
+   * @param userId
+   * @param currentSessionId
+   */
+  async listSessions(userId: User['id'], currentSessionId: string) {
+    const sessions = await this.sessionService.listActiveByUserId(
+      Number(userId),
+    );
+    return sessions.map((session) => ({
+      ...session,
+      current: session.id === currentSessionId,
+    }));
+  }
+
+  /**
+   * 撤销自己的一个会话。不属于自己时返回 404。
+   * @param userId
+   * @param sessionId
+   */
+  async revokeOwnSession(userId: User['id'], sessionId: string): Promise<void> {
+    const revoked = await this.prisma.runInTransaction(async (tx) => {
+      const owned = await this.sessionService.revokeOwned(
+        Number(userId),
+        sessionId,
+        'logout',
+        tx,
+      );
+      if (!owned) {
+        return false;
+      }
+      await this.sessionService.recordAudit(
+        {
+          type: 'session_revoked',
+          userId: Number(userId),
+          sessionId,
+        },
+        tx,
+      );
+      return true;
+    });
+    if (!revoked) {
+      throw new NotFoundException();
+    }
+    await this.revocation.revoke([sessionId], 'logout');
+  }
+
+  /**
+   * 撤销该用户的全部会话。
+   * @param userId
+   * @param reason
+   * @param auditType
+   */
+  async revokeAllSessions(
+    userId: User['id'],
+    reason: string,
+    auditType: string,
+  ): Promise<void> {
+    const ids = await this.prisma.runInTransaction(async (tx) => {
+      const revoked = await this.sessionService.deleteByUserId(
+        { userId, reason },
+        tx,
+      );
+      await this.sessionService.recordAudit(
+        { type: auditType, userId: Number(userId) },
+        tx,
+      );
+      return revoked;
+    });
+    await this.revocation.revoke(ids, reason);
+  }
+
   async logout(data: Pick<JwtPayloadType, 'id' | 'sessionId'>): Promise<void> {
     await this.prisma.runInTransaction(async (tx) => {
       await this.sessionService.deleteById(data.sessionId, 'logout', tx);
@@ -695,7 +788,10 @@ export class AuthService {
    * 创建会话和不透明刷新令牌。库里只保存 HMAC。
    * @param user
    */
-  private async issueSession(user: User): Promise<{
+  private async issueSession(
+    user: User,
+    context: AuthClientContext = {},
+  ): Promise<{
     session: Session;
     refreshToken: string;
   }> {
@@ -705,7 +801,10 @@ export class AuthService {
     });
     const expiresAt = this.refreshExpiresAt(new Date());
     const session = await this.prisma.runInTransaction(async (tx) => {
-      const created = await this.sessionService.create({ user, expiresAt }, tx);
+      const created = await this.sessionService.create(
+        { user, expiresAt, ...context },
+        tx,
+      );
       await this.sessionService.issueRefresh(
         {
           sessionId: created.id,
@@ -803,6 +902,10 @@ export class AuthService {
       {
         secret: this.configService.getOrThrow('auth.secret', { infer: true }),
         expiresIn: tokenExpiresIn,
+        header: {
+          alg: 'HS256',
+          kid: this.configService.getOrThrow('auth.accessKid', { infer: true }),
+        },
       },
     );
 

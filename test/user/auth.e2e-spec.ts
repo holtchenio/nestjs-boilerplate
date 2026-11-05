@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import { describe, expect, it, beforeAll } from '@jest/globals';
 import request from 'supertest';
 import {
@@ -9,6 +10,31 @@ import {
 } from '../utils/constants';
 import type { MailMessage } from '../utils/types/mail-message.type';
 import { waitForMailHash } from '../utils/wait-for-mail';
+
+/**
+ * @param payload
+ * @param secret
+ * @param kid
+ * @returns
+ */
+function signHs256(
+  payload: Record<string, unknown>,
+  secret: string,
+  kid?: string,
+): string {
+  const header = Buffer.from(
+    JSON.stringify({
+      alg: 'HS256',
+      typ: 'JWT',
+      ...(kid ? { kid } : {}),
+    }),
+  ).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = createHmac('sha256', secret)
+    .update(`${header}.${body}`)
+    .digest('base64url');
+  return `${header}.${body}.${signature}`;
+}
 
 describe('Auth Module', () => {
   const app = APP_URL;
@@ -443,6 +469,172 @@ describe('Auth Module', () => {
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
         .expect(422);
+    });
+  });
+
+  describe('Sessions', () => {
+    const email = `sessions.${Date.now()}@example.com`;
+    const password = 'secret';
+
+    beforeAll(async () => {
+      await request(app)
+        .post('/api/v1/auth/email/register')
+        .send({
+          email,
+          password,
+          firstName: 'Session',
+          lastName: 'Tester',
+        })
+        .expect(204);
+    });
+
+    it('should revoke one device and keep the other', async () => {
+      const first = await request(app)
+        .post('/api/v1/auth/email/login')
+        .send({ email, password, deviceName: 'phone', deviceType: 'ios' })
+        .expect(200);
+      const second = await request(app)
+        .post('/api/v1/auth/email/login')
+        .send({ email, password, deviceName: 'laptop', deviceType: 'desktop' })
+        .expect(200);
+
+      const listed = await request(app)
+        .get('/api/v1/auth/sessions')
+        .auth(second.body.token, { type: 'bearer' })
+        .expect(200);
+      const other = listed.body.find(
+        (session: { current: boolean; id: string }) => !session.current,
+      );
+      expect(other?.id).toEqual(expect.any(String));
+
+      await request(app)
+        .delete(`/api/v1/auth/sessions/${other.id}`)
+        .auth(second.body.token, { type: 'bearer' })
+        .expect(204);
+
+      await request(app)
+        .post('/api/v1/auth/refresh')
+        .auth(first.body.refreshToken, { type: 'bearer' })
+        .expect(401);
+      await request(app)
+        .post('/api/v1/auth/refresh')
+        .auth(second.body.refreshToken, { type: 'bearer' })
+        .expect(200);
+    });
+
+    it('should reject both access tokens after logout all', async () => {
+      const first = await request(app)
+        .post('/api/v1/auth/email/login')
+        .send({ email, password })
+        .expect(200);
+      const second = await request(app)
+        .post('/api/v1/auth/email/login')
+        .send({ email, password })
+        .expect(200);
+
+      await request(app)
+        .post('/api/v1/auth/logout/all')
+        .auth(first.body.token, { type: 'bearer' })
+        .expect(204);
+
+      await request(app)
+        .get('/api/v1/auth/me')
+        .auth(first.body.token, { type: 'bearer' })
+        .expect(401);
+      await request(app)
+        .get('/api/v1/auth/me')
+        .auth(second.body.token, { type: 'bearer' })
+        .expect(401);
+    });
+
+    it('should reject the access token after the account is deleted', async () => {
+      const login = await request(app)
+        .post('/api/v1/auth/email/login')
+        .send({ email, password })
+        .expect(200);
+
+      await request(app)
+        .delete('/api/v1/auth/me')
+        .auth(login.body.token, { type: 'bearer' })
+        .expect(204);
+      await request(app)
+        .get('/api/v1/auth/me')
+        .auth(login.body.token, { type: 'bearer' })
+        .expect(401);
+    });
+
+    it('should keep bearer responses unchanged and accept cookie mode', async () => {
+      const bearer = await request(app)
+        .post('/api/v1/auth/email/login')
+        .send({ email: TESTER_EMAIL, password: TESTER_PASSWORD })
+        .expect(200);
+      expect(bearer.body.refreshToken).toEqual(expect.any(String));
+      const [encodedHeader, encodedPayload] = String(bearer.body.token).split(
+        '.',
+      );
+      const header = JSON.parse(
+        Buffer.from(encodedHeader, 'base64url').toString(),
+      ) as { kid?: string };
+      expect(header.kid).toBe('current');
+
+      const naked = signHs256(
+        {
+          id: 1,
+          role: { id: 1 },
+          sessionId: '00000000-0000-4000-8000-000000000000',
+        },
+        process.env.AUTH_JWT_SECRET ?? '',
+      );
+      await request(app)
+        .get('/api/v1/auth/me')
+        .auth(naked, { type: 'bearer' })
+        .expect(401);
+
+      const previousSecret = (
+        process.env.AUTH_JWT_PREVIOUS_SECRETS ?? ''
+      ).startsWith('previous:')
+        ? (process.env.AUTH_JWT_PREVIOUS_SECRETS ?? '').slice(
+            'previous:'.length,
+          )
+        : '';
+      if (previousSecret) {
+        const payload = JSON.parse(
+          Buffer.from(encodedPayload, 'base64url').toString(),
+        ) as Record<string, unknown>;
+        const resigned = signHs256(payload, previousSecret, 'previous');
+        await request(app)
+          .get('/api/v1/auth/me')
+          .auth(resigned, { type: 'bearer' })
+          .expect(200);
+      }
+
+      const cookieLogin = await request(app)
+        .post('/api/v1/auth/email/login')
+        .set('x-auth-mode', 'cookie')
+        .set('Origin', 'http://localhost:3000')
+        .send({ email: TESTER_EMAIL, password: TESTER_PASSWORD })
+        .expect(200);
+      expect(cookieLogin.body.refreshToken).toBeUndefined();
+      const rawCookie = cookieLogin.headers['set-cookie'];
+      const cookies = (Array.isArray(rawCookie) ? rawCookie : [rawCookie ?? ''])
+        .map((value) => value.split(';')[0])
+        .join('; ');
+      const csrf = /csrf_token=([^;]+)/.exec(cookies)?.[1] ?? '';
+
+      await request(app)
+        .post('/api/v1/auth/refresh')
+        .set('x-auth-mode', 'cookie')
+        .set('Origin', 'http://localhost:3000')
+        .set('Cookie', cookies)
+        .expect(403);
+
+      await request(app)
+        .post('/api/v1/auth/refresh')
+        .set('x-auth-mode', 'cookie')
+        .set('Origin', 'http://localhost:3000')
+        .set('X-CSRF-Token', csrf)
+        .set('Cookie', cookies)
+        .expect(200);
     });
   });
 });

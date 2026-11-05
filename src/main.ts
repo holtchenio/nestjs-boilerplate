@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import {
   ClassSerializerInterceptor,
@@ -31,8 +32,23 @@ async function bootstrap() {
   const corsOrigins = configService.getOrThrow('app.corsOrigins', {
     infer: true,
   });
+  const cookieEnabled = configService.getOrThrow('auth.cookieEnabled', {
+    infer: true,
+  });
+  if (
+    (cookieEnabled ||
+      configService.getOrThrow('app.nodeEnv', { infer: true }) ===
+        'production') &&
+    corsOrigins.includes('*')
+  ) {
+    throw new Error(
+      'APP_CORS_ORIGINS cannot contain * when cookie auth or production is enabled',
+    );
+  }
+  app.use(cookieParser());
   app.enableCors({
     origin: corsOrigins.includes('*') ? '*' : corsOrigins,
+    credentials: cookieEnabled,
   });
 
   app.enableShutdownHooks();

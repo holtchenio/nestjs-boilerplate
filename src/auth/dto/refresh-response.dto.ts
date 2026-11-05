@@ -5,7 +5,7 @@ export class RefreshResponseDto {
   token: string;
 
   @ApiProperty()
-  refreshToken: string;
+  refreshToken?: string;
 
   @ApiProperty()
   tokenExpires: number;

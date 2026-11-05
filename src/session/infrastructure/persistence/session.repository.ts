@@ -24,6 +24,15 @@ export type RefreshTokenRecord = {
   userId: number;
 };
 
+export type SessionSummary = {
+  id: string;
+  deviceName: string | null;
+  deviceType: string | null;
+  createdAt: Date;
+  lastUsedAt: Date;
+  expiresAt: Date;
+};
+
 export type AuditEventDraft = {
   type: string;
   userId?: number | null;
@@ -130,4 +139,23 @@ export abstract class SessionRepository {
    * @param db
    */
   abstract recordAudit(event: AuditEventDraft, db?: DbClient): Promise<void>;
+
+  /**
+   * @param userId
+   */
+  abstract listActiveByUserId(userId: number): Promise<SessionSummary[]>;
+
+  /**
+   * 只撤销属于该用户的会话。找不到返回 false。
+   * @param userId
+   * @param sessionId
+   * @param reason
+   * @param db
+   */
+  abstract revokeOwned(
+    userId: number,
+    sessionId: string,
+    reason: string,
+    db?: DbClient,
+  ): Promise<boolean>;
 }

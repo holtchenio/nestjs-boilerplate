@@ -34,6 +34,7 @@ import { QueryUserDto } from './dto/query-user.dto';
 import { User } from './domain/user';
 import { UsersService } from './users.service';
 import { RolesGuard } from '../roles/roles.guard';
+import { AuthService } from '../auth/auth.service';
 import { infinityPagination } from '../utils/infinity-pagination';
 
 @ApiBearerAuth()
@@ -45,7 +46,10 @@ import { infinityPagination } from '../utils/infinity-pagination';
   version: '1',
 })
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService,
+  ) {}
 
   @ApiCreatedResponse({
     type: User,
@@ -124,6 +128,17 @@ export class UsersController {
     @Body() updateProfileDto: UpdateUserDto,
   ): Promise<User | null> {
     return this.usersService.update(id, updateProfileDto);
+  }
+
+  @Delete(':id/sessions')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  revokeSessions(@Param('id') id: User['id']): Promise<void> {
+    return this.authService.revokeAllSessions(id, 'admin', 'session_revoked');
   }
 
   @Delete(':id')

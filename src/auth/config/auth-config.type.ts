@@ -12,4 +12,10 @@ export type AuthConfig = {
   uniformErrors: boolean;
   sessionCheck: boolean;
   reuseGraceSeconds: number;
+  cookieEnabled: boolean;
+  cookieSameSite: 'Lax' | 'Strict' | 'None';
+  accessKid: string;
+  previousSecrets: Record<string, string>;
+  throttleLimit: number;
+  loginFailLimit: number;
 };

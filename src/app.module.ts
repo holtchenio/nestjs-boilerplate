@@ -28,6 +28,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { loggerModuleParams } from './logger/logger.options';
 import { QueueModule } from './queue/queue.module';
 import { HealthModule } from './health/health.module';
+import { authThrottlerModule } from './cache/redis-throttler.storage';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { HealthModule } from './health/health.module';
     }),
     LoggerModule.forRoot(loggerModuleParams()),
     RedisModule,
+    authThrottlerModule(),
     QueueModule,
     PrismaModule,
     I18nModule.forRootAsync({

@@ -9,6 +9,7 @@ import {
   RefreshTokenRecord,
   SessionDraft,
   SessionRepository,
+  SessionSummary,
 } from '../session.repository';
 import {
   UserMapper,
@@ -225,6 +226,57 @@ export class SessionPrismaRepository implements SessionRepository {
    * @param event
    * @param db
    */
+  /**
+   * @param userId
+   * @param db
+   */
+  async listActiveByUserId(
+    userId: number,
+    db: DbClient = this.prisma.client,
+  ): Promise<SessionSummary[]> {
+    return db.session.findMany({
+      where: {
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { lastUsedAt: 'desc' },
+      select: {
+        id: true,
+        deviceName: true,
+        deviceType: true,
+        createdAt: true,
+        lastUsedAt: true,
+        expiresAt: true,
+      },
+    });
+  }
+
+  /**
+   * @param userId
+   * @param sessionId
+   * @param reason
+   * @param db
+   */
+  async revokeOwned(
+    userId: number,
+    sessionId: string,
+    reason: string,
+    db: DbClient = this.prisma.client,
+  ): Promise<boolean> {
+    const row = await db.session.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true, revokedAt: true },
+    });
+    if (!row) {
+      return false;
+    }
+    if (!row.revokedAt) {
+      await this.revokeSessions(db, { id: sessionId, userId }, reason);
+    }
+    return true;
+  }
+
   async recordAudit(
     event: AuditEventDraft,
     db: DbClient = this.prisma.client,
