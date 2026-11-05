@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { IsString, Matches } from 'class-validator';
-import validateConfig from '../../utils/validate-config';
-import { RedisConfig } from './redis-config.type';
+import validateConfig from '../../utils/validate-config.js';
+import { RedisConfig } from './redis-config.type.js';
 
 class EnvironmentVariablesValidator {
   @IsString()

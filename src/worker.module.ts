@@ -3,22 +3,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { LoggerModule } from 'nestjs-pino';
 import path from 'path';
-import authConfig from './auth/config/auth.config';
-import appleConfig from './auth-apple/config/apple.config';
-import facebookConfig from './auth-facebook/config/facebook.config';
-import googleConfig from './auth-google/config/google.config';
-import redisConfig from './cache/config/redis.config';
-import appConfig from './config/app.config';
-import { AllConfigType } from './config/config.type';
-import databaseConfig from './database/config/database.config';
-import { PrismaModule } from './database/prisma.module';
-import fileConfig from './files/config/file.config';
-import { loggerModuleParams } from './logger/logger.options';
-import mailConfig from './mail/config/mail.config';
-import { authThrottlerModule } from './cache/redis-throttler.storage';
-import { RedisModule } from './cache/redis.module';
-import { QueueModule } from './queue/queue.module';
-import { MailWorkerModule } from './workers/mail/mail-worker.module';
+import authConfig from './auth/config/auth.config.js';
+import appleConfig from './auth-apple/config/apple.config.js';
+import facebookConfig from './auth-facebook/config/facebook.config.js';
+import googleConfig from './auth-google/config/google.config.js';
+import redisConfig from './cache/config/redis.config.js';
+import appConfig from './config/app.config.js';
+import { AllConfigType } from './config/config.type.js';
+import databaseConfig from './database/config/database.config.js';
+import { PrismaModule } from './database/prisma.module.js';
+import fileConfig from './files/config/file.config.js';
+import { loggerModuleParams } from './logger/logger.options.js';
+import mailConfig from './mail/config/mail.config.js';
+import { authThrottlerModule } from './cache/redis-throttler.storage.js';
+import { RedisModule } from './cache/redis.module.js';
+import { QueueModule } from './queue/queue.module.js';
+import { MailWorkerModule } from './workers/mail/mail-worker.module.js';
 
 @Module({
   imports: [
@@ -47,7 +47,10 @@ import { MailWorkerModule } from './workers/mail/mail-worker.module';
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
           infer: true,
         }),
-        loaderOptions: { path: path.join(__dirname, '/i18n/'), watch: true },
+        loaderOptions: {
+          path: path.join(import.meta.dirname, '/i18n/'),
+          watch: true,
+        },
       }),
       resolvers: [
         {

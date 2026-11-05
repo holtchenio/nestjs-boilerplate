@@ -7,9 +7,9 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import validateConfig from '../../utils/validate-config';
-import { AuthConfig } from './auth-config.type';
-import { parsePreviousSecrets } from '../access-token-secret';
+import validateConfig from '../../utils/validate-config.js';
+import { AuthConfig } from './auth-config.type.js';
+import { parsePreviousSecrets } from '../access-token-secret.js';
 import ms from 'ms';
 
 const PLACEHOLDER_SECRETS = {

@@ -1,5 +1,5 @@
-import { MailQueueService } from './mail-queue.service';
-import { MailJob, mailJobId } from './mail-job';
+import { MailQueueService } from './mail-queue.service.js';
+import { MailJob, mailJobId } from './mail-job.js';
 import { Queue } from 'bullmq';
 
 const job: MailJob = {
@@ -22,7 +22,7 @@ describe('mailJobId', () => {
 
 describe('MailQueueService', () => {
   it('should enqueue twice with one job id inside the bucket', async () => {
-    const add = jest.fn().mockResolvedValue(undefined);
+    const add = vi.fn().mockResolvedValue(undefined);
     const service = new MailQueueService({ add } as unknown as Queue);
     const now = 1_700_000_030_000;
 

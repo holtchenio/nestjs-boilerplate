@@ -1,5 +1,5 @@
-import { PrismaService } from '../database/prisma.service';
-import { RedisService } from '../cache/redis.service';
+import { PrismaService } from '../database/prisma.service.js';
+import { RedisService } from '../cache/redis.service.js';
 
 type CheckState = { status: 'up' | 'down' };
 

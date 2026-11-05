@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { SessionRepository } from '../session.repository';
-import { SessionPrismaRepository } from './session.repository';
+import { SessionRepository } from '../session.repository.js';
+import { SessionPrismaRepository } from './session.repository.js';
 
 @Module({
   providers: [

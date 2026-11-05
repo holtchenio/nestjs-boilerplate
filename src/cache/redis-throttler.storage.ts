@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
-import { AllConfigType } from '../config/config.type';
-import { RedisService } from './redis.service';
+import { AllConfigType } from '../config/config.type.js';
+import { RedisService } from './redis.service.js';
 
 /**
  * Worker 也会装载带 ThrottlerGuard 的 AuthModule，所以两边都要注册。

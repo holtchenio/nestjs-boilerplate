@@ -1,6 +1,6 @@
 import { Writable } from 'stream';
 import pino from 'pino';
-import { loggerRedact, resolveRequestId } from './logger.options';
+import { loggerRedact, resolveRequestId } from './logger.options.js';
 import { IncomingMessage, ServerResponse } from 'http';
 
 describe('logger redaction', () => {
@@ -49,7 +49,7 @@ describe('logger redaction', () => {
     const headers: Record<string, string | string[]> = {
       'x-request-id': 'req-123',
     };
-    const setHeader = jest.fn();
+    const setHeader = vi.fn();
     const id = resolveRequestId(
       { headers } as IncomingMessage,
       { setHeader } as unknown as ServerResponse,

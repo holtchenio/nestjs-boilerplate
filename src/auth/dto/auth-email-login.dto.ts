@@ -7,7 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';
+import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer.js';
 
 export class AuthEmailLoginDto {
   @ApiProperty({ example: 'test1@example.com', type: String })

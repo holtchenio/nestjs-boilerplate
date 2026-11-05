@@ -1,12 +1,12 @@
 import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
-import { CreateUserDto } from './create-user.dto';
+import { CreateUserDto } from './create-user.dto.js';
 
 import { Transform, Type } from 'class-transformer';
 import { IsEmail, IsOptional, MinLength } from 'class-validator';
-import { FileDto } from '../../files/dto/file.dto';
-import { RoleDto } from '../../roles/dto/role.dto';
-import { StatusDto } from '../../statuses/dto/status.dto';
-import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';
+import { FileDto } from '../../files/dto/file.dto.js';
+import { RoleDto } from '../../roles/dto/role.dto.js';
+import { StatusDto } from '../../statuses/dto/status.dto.js';
+import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer.js';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({ example: 'test1@example.com', type: String })

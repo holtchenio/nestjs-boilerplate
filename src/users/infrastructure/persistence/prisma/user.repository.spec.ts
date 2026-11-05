@@ -1,7 +1,7 @@
 import { UnprocessableEntityException } from '@nestjs/common';
-import { Prisma } from '../../../../generated/prisma/client';
-import { PrismaService } from '../../../../database/prisma.service';
-import { UsersPrismaRepository } from './user.repository';
+import { Prisma } from '../../../../generated/prisma/client.js';
+import { PrismaService } from '../../../../database/prisma.service.js';
+import { UsersPrismaRepository } from './user.repository.js';
 
 const createPayload = {
   email: 'a@b.c',
@@ -30,8 +30,8 @@ describe('UsersPrismaRepository', () => {
   function repository(error: unknown): UsersPrismaRepository {
     const client = {
       user: {
-        create: jest.fn().mockRejectedValue(error),
-        findMany: jest.fn(),
+        create: vi.fn().mockRejectedValue(error),
+        findMany: vi.fn(),
       },
     };
     return new UsersPrismaRepository({

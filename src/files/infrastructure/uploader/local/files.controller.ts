@@ -18,8 +18,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { FilesLocalService } from './files.service';
-import { FileResponseDto } from './dto/file-response.dto';
+import { FilesLocalService } from './files.service.js';
+import { FileResponseDto } from './dto/file-response.dto.js';
 import type { Response as ExpressResponse } from 'express';
 
 @ApiTags('Files')

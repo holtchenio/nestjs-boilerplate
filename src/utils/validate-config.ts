@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { ClassConstructor } from 'class-transformer/types/interfaces';
+import { type ClassConstructor } from 'class-transformer';
 
 function validateConfig<T extends object>(
   config: Record<string, unknown>,

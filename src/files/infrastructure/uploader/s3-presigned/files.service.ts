@@ -4,15 +4,15 @@ import {
   PayloadTooLargeException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { FileRepository } from '../../persistence/file.repository';
+import { FileRepository } from '../../persistence/file.repository.js';
 
-import { FileUploadDto } from './dto/file.dto';
+import { FileUploadDto } from './dto/file.dto.js';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util.js';
 import { ConfigService } from '@nestjs/config';
-import { FileType } from '../../../domain/file';
-import { AllConfigType } from '../../../../config/config.type';
+import { FileType } from '../../../domain/file.js';
+import { AllConfigType } from '../../../../config/config.type.js';
 
 @Injectable()
 export class FilesS3PresignedService {

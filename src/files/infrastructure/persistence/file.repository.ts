@@ -1,5 +1,5 @@
-import { NullableType } from '../../../utils/types/nullable.type';
-import { FileType } from '../../domain/file';
+import { NullableType } from '../../../utils/types/nullable.type.js';
+import { FileType } from '../../domain/file.js';
 
 export abstract class FileRepository {
   abstract create(data: Omit<FileType, 'id'>): Promise<FileType>;

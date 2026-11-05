@@ -1,7 +1,7 @@
 import { Exclude, Expose } from 'class-transformer';
-import { FileType } from '../../files/domain/file';
-import { Role } from '../../roles/domain/role';
-import { Status } from '../../statuses/domain/status';
+import { FileType } from '../../files/domain/file.js';
+import { Role } from '../../roles/domain/role.js';
+import { Status } from '../../statuses/domain/status.js';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class User {

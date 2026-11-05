@@ -1,18 +1,18 @@
 import { Job } from 'bullmq';
 import { PinoLogger } from 'nestjs-pino';
-import { MailJob } from '../../queue/mail-job';
-import { MailJobHandler } from './mail-job.handler';
-import { MailProcessor } from './mail.processor';
+import { MailJob } from '../../queue/mail-job.js';
+import { MailJobHandler } from './mail-job.handler.js';
+import { MailProcessor } from './mail.processor.js';
 
 describe('MailProcessor', () => {
   it('should log the job id and kind without the new email', async () => {
-    const info = jest.fn();
-    const handle = jest.fn().mockResolvedValue(undefined);
+    const info = vi.fn();
+    const handle = vi.fn().mockResolvedValue(undefined);
     const processor = new MailProcessor(
       {
         info,
-        error: jest.fn(),
-        setContext: jest.fn(),
+        error: vi.fn(),
+        setContext: vi.fn(),
       } as unknown as PinoLogger,
       { handle } as unknown as MailJobHandler,
     );

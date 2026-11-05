@@ -9,10 +9,10 @@ import {
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from '../auth/auth.service';
-import { AuthAppleService } from './auth-apple.service';
-import { AuthAppleLoginDto } from './dto/auth-apple-login.dto';
-import { LoginResponseDto } from '../auth/dto/login-response.dto';
+import { AuthService } from '../auth/auth.service.js';
+import { AuthAppleService } from './auth-apple.service.js';
+import { AuthAppleLoginDto } from './dto/auth-apple-login.dto.js';
+import { LoginResponseDto } from '../auth/dto/login-response.dto.js';
 
 @ApiTags('Auth')
 @Controller({

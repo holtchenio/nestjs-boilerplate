@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
-import { WorkerModule } from './worker.module';
+import { WorkerModule } from './worker.module.js';
 
 /**
  * 启动只消费队列的 Worker 进程。

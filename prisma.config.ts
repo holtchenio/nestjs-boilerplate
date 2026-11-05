@@ -4,7 +4,7 @@ import { databaseUrlFromEnv } from './prisma/database-url';
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
-    seed: 'ts-node -r tsconfig-paths/register prisma/seed.ts',
+    seed: 'tsx prisma/seed.ts',
   },
   datasource: {
     url: databaseUrlFromEnv(),

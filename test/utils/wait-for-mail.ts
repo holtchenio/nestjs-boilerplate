@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { MailMessage } from './types/mail-message.type';
+import { MailMessage } from './types/mail-message.type.js';
 
 /**
  * 轮询 maildev，直到某封信能抽出 hash。

@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
-import { RedisService } from '../cache/redis.service';
-import { AllConfigType } from '../config/config.type';
+import { RedisService } from '../cache/redis.service.js';
+import { AllConfigType } from '../config/config.type.js';
 
 /**
  * Access Token 剩余寿命内的会话撤销缓存。PostgreSQL 仍是权威来源。

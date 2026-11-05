@@ -1,8 +1,8 @@
 import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
-import { RedisService } from '../cache/redis.service';
-import { PrismaService } from '../database/prisma.service';
-import { checkDatabase, checkRedis } from './health.indicators';
+import { RedisService } from '../cache/redis.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { checkDatabase, checkRedis } from './health.indicators.js';
 
 @Controller({
   path: 'health',

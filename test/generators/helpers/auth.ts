@@ -1,6 +1,6 @@
 import request from 'supertest';
 
-import { ADMIN_EMAIL, ADMIN_PASSWORD, APP_URL } from '../../utils/constants';
+import { ADMIN_EMAIL, ADMIN_PASSWORD, APP_URL } from '../../utils/constants.js';
 
 export interface AdminSession {
   token: string;

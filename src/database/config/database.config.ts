@@ -9,8 +9,8 @@ import {
   ValidateIf,
   IsBoolean,
 } from 'class-validator';
-import validateConfig from '../../utils/validate-config';
-import { DatabaseConfig } from './database-config.type';
+import validateConfig from '../../utils/validate-config.js';
+import { DatabaseConfig } from './database-config.type.js';
 
 class EnvironmentVariablesValidator {
   @ValidateIf((envValues) => envValues.DATABASE_URL)

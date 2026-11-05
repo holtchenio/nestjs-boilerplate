@@ -1,9 +1,9 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '../src/generated/prisma/client';
-import { RoleEnum } from '../src/roles/roles.enum';
-import { StatusEnum } from '../src/statuses/statuses.enum';
-import { databaseUrlFromEnv } from './database-url';
+import { PrismaClient } from '../src/generated/prisma/client.js';
+import { RoleEnum } from '../src/roles/roles.enum.js';
+import { StatusEnum } from '../src/statuses/statuses.enum.js';
+import { databaseUrlFromEnv } from './database-url.js';
 
 const databaseUrl = databaseUrlFromEnv();
 

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CookieOptions, Response } from 'express';
 import ms from 'ms';
-import { AllConfigType } from '../config/config.type';
-import { createRefreshToken } from './refresh-token';
+import { AllConfigType } from '../config/config.type.js';
+import { createRefreshToken } from './refresh-token.js';
 
 /**
  * Cookie 模式下发刷新令牌和可读的 CSRF Cookie。

@@ -16,31 +16,31 @@ import {
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Response } from 'express';
-import { AuthService } from './auth.service';
+import { AuthService } from './auth.service.js';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
-import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
-import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
-import { AuthResetPasswordDto } from './dto/auth-reset-password.dto';
-import { AuthUpdateDto } from './dto/auth-update.dto';
+import { AuthEmailLoginDto } from './dto/auth-email-login.dto.js';
+import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto.js';
+import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto.js';
+import { AuthResetPasswordDto } from './dto/auth-reset-password.dto.js';
+import { AuthUpdateDto } from './dto/auth-update.dto.js';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { NullableType } from '../utils/types/nullable.type';
-import { User } from '../users/domain/user';
-import { RefreshResponseDto } from './dto/refresh-response.dto';
-import type { RequestWithUser } from '../utils/types/request-with-user.type';
-import type { JwtPayloadType } from './strategies/types/jwt-payload.type';
+import { AuthRegisterLoginDto } from './dto/auth-register-login.dto.js';
+import { LoginResponseDto } from './dto/login-response.dto.js';
+import { NullableType } from '../utils/types/nullable.type.js';
+import { User } from '../users/domain/user.js';
+import { RefreshResponseDto } from './dto/refresh-response.dto.js';
+import type { RequestWithUser } from '../utils/types/request-with-user.type.js';
+import type { JwtPayloadType } from './strategies/types/jwt-payload.type.js';
 import { I18nContext } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '../config/config.type';
+import { AllConfigType } from '../config/config.type.js';
 import {
   RefreshTokenGuard,
   RequestWithRefreshToken,
-} from './guards/refresh-token.guard';
-import { AuthCookies } from './auth-cookies';
-import { AuthClientContext } from './auth.service';
-import { CookieCsrfGuard } from './guards/cookie-csrf.guard';
+} from './guards/refresh-token.guard.js';
+import { AuthCookies } from './auth-cookies.js';
+import { AuthClientContext } from './auth.service.js';
+import { CookieCsrfGuard } from './guards/cookie-csrf.guard.js';
 
 @ApiTags('Auth')
 @Controller({

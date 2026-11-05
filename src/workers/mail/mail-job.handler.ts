@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import ms from 'ms';
-import { forgotPasswordSecret } from '../../auth/forgot-password-secret';
-import { AllConfigType } from '../../config/config.type';
-import { MailService } from '../../mail/mail.service';
-import { MailJob } from '../../queue/mail-job';
-import { UsersService } from '../../users/users.service';
+import { forgotPasswordSecret } from '../../auth/forgot-password-secret.js';
+import { AllConfigType } from '../../config/config.type.js';
+import { MailService } from '../../mail/mail.service.js';
+import { MailJob } from '../../queue/mail-job.js';
+import { UsersService } from '../../users/users.service.js';
 
 @Injectable()
 export class MailJobHandler {

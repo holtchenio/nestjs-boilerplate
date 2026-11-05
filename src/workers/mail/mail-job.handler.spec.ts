@@ -1,9 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { MailService } from '../../mail/mail.service';
-import { UsersService } from '../../users/users.service';
-import { User } from '../../users/domain/user';
-import { MailJobHandler } from './mail-job.handler';
+import { MailService } from '../../mail/mail.service.js';
+import { UsersService } from '../../users/users.service.js';
+import { User } from '../../users/domain/user.js';
+import { MailJobHandler } from './mail-job.handler.js';
 
 describe('MailJobHandler', () => {
   const user = {
@@ -13,16 +13,16 @@ describe('MailJobHandler', () => {
   } as User;
 
   it('should sign the reset link with the current password hash', async () => {
-    const signAsync = jest.fn().mockResolvedValue('signed-token');
-    const forgotPassword = jest.fn().mockResolvedValue(undefined);
+    const signAsync = vi.fn().mockResolvedValue('signed-token');
+    const forgotPassword = vi.fn().mockResolvedValue(undefined);
     const handler = new MailJobHandler(
       {
-        findById: jest.fn().mockResolvedValue(user),
+        findById: vi.fn().mockResolvedValue(user),
       } as unknown as UsersService,
       { signAsync } as unknown as JwtService,
       { forgotPassword } as unknown as MailService,
       {
-        getOrThrow: jest.fn().mockImplementation((key: string) => {
+        getOrThrow: vi.fn().mockImplementation((key: string) => {
           if (key === 'auth.forgotSecret') {
             return 'forgot-secret';
           }

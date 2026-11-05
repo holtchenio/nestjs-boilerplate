@@ -1,4 +1,4 @@
-import redisConfig from './redis.config';
+import redisConfig from './redis.config.js';
 
 describe('redisConfig', () => {
   const previous = process.env.REDIS_URL;

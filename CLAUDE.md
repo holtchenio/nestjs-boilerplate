@@ -16,7 +16,7 @@ npm run build            # 编译到 dist/
 npm run lint             # 对 {src,apps,libs,test}/**/*.ts 执行 eslint
 npm run format           # 对 src/ 和 test/ 执行 prettier --write
 
-npm run test             # 单元测试（jest，rootDir 为 src，testRegex 为 *.spec.ts）
+pnpm test                # 单元测试（vitest，include 为 src/**/*.spec.ts）
 npm run test -- <path>   # 运行单个测试文件，例如 npm run test -- users/users.service.spec.ts
 npm run test:cov         # 带覆盖率的单元测试
 npm run test:e2e         # e2e 测试（需要运行中的数据库）

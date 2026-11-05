@@ -1,8 +1,8 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { PinoLogger } from 'nestjs-pino';
-import { MAIL_QUEUE, MailJob } from '../../queue/mail-job';
-import { MailJobHandler } from './mail-job.handler';
+import { MAIL_QUEUE, MailJob } from '../../queue/mail-job.js';
+import { MailJobHandler } from './mail-job.handler.js';
 
 @Processor(MAIL_QUEUE, {
   concurrency: 5,

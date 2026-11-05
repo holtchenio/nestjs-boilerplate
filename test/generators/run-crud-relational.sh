@@ -4,7 +4,7 @@
 #
 # Runs the generator matrix on the host, brings up the relational Docker
 # stack (volume-mounting the freshly-generated source), then runs the
-# CRUD jest spec inside the API container against the live HTTP API.
+# CRUD spec inside the API container against the live HTTP API.
 #
 # Cleanup tears down Docker, removes generated source dirs, and reverts
 # tracked changes — bounded to src/ and migration files we created.
@@ -50,4 +50,4 @@ docker compose -f "$COMPOSE_FILE" --env-file env-example-relational -p "$COMPOSE
 
 # Wait for the API container's port 3001 (mirrors the existing test:e2e:*:docker pattern).
 docker compose -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT" exec api /opt/wait-for-it.sh -t 0 localhost:3001 -- \
-  pnpm exec jest --config test/jest-e2e.json --testPathIgnorePatterns=/node_modules/ --testPathPatterns=generators-relational --runInBand
+  pnpm exec vitest run --config vitest.e2e.config.ts --exclude '**/node_modules/**' test/generators/generators-relational.e2e-spec.ts

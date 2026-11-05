@@ -1,16 +1,16 @@
 import prompts from 'prompts';
-import removeFacebookAuth from './scripts/remove-auth-facebook';
-import removeGoogleAuth from './scripts/remove-auth-google';
-import removeAppleAuth from './scripts/remove-auth-apple';
-import removeInstallScripts from './scripts/remove-install-scripts';
-import removePostgreSql from './scripts/remove-postgresql';
-import removeMongoDb from './scripts/remove-mongodb';
-import removeRelationalResourceGeneration from './scripts/resource-generation-scripts/remove-relational';
-import removeDocumentResourceGeneration from './scripts/resource-generation-scripts/remove-document';
-import removeAllDbResourceGeneration from './scripts/resource-generation-scripts/remove-all-db';
-import removeAllDbPropertyGeneration from './scripts/property-generation-scripts/remove-all-db';
-import removeDocumentPropertyGeneration from './scripts/property-generation-scripts/remove-document';
-import removeRelationalPropertyGeneration from './scripts/property-generation-scripts/remove-relational';
+import removeFacebookAuth from './scripts/remove-auth-facebook.js';
+import removeGoogleAuth from './scripts/remove-auth-google.js';
+import removeAppleAuth from './scripts/remove-auth-apple.js';
+import removeInstallScripts from './scripts/remove-install-scripts.js';
+import removePostgreSql from './scripts/remove-postgresql.js';
+import removeMongoDb from './scripts/remove-mongodb.js';
+import removeRelationalResourceGeneration from './scripts/resource-generation-scripts/remove-relational.js';
+import removeDocumentResourceGeneration from './scripts/resource-generation-scripts/remove-document.js';
+import removeAllDbResourceGeneration from './scripts/resource-generation-scripts/remove-all-db.js';
+import removeAllDbPropertyGeneration from './scripts/property-generation-scripts/remove-all-db.js';
+import removeDocumentPropertyGeneration from './scripts/property-generation-scripts/remove-document.js';
+import removeRelationalPropertyGeneration from './scripts/property-generation-scripts/remove-relational.js';
 
 void (async () => {
   const response = await prompts(

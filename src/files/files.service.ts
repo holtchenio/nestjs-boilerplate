@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import { FileRepository } from './infrastructure/persistence/file.repository';
-import { FileType } from './domain/file';
-import { NullableType } from '../utils/types/nullable.type';
+import { FileRepository } from './infrastructure/persistence/file.repository.js';
+import { FileType } from './domain/file.js';
+import { NullableType } from '../utils/types/nullable.type.js';
 
 @Injectable()
 export class FilesService {

@@ -4,13 +4,13 @@ import {
   forwardRef,
 } from '@nestjs/common';
 
-import { UsersController } from './users.controller';
+import { UsersController } from './users.controller.js';
 
-import { UsersService } from './users.service';
-import { PrismaUserPersistenceModule } from './infrastructure/persistence/prisma/prisma-persistence.module';
-import { FilesModule } from '../files/files.module';
-import { SessionModule } from '../session/session.module';
-import { AuthModule } from '../auth/auth.module';
+import { UsersService } from './users.service.js';
+import { PrismaUserPersistenceModule } from './infrastructure/persistence/prisma/prisma-persistence.module.js';
+import { FilesModule } from '../files/files.module.js';
+import { SessionModule } from '../session/session.module.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 const infrastructurePersistenceModule = PrismaUserPersistenceModule;
 

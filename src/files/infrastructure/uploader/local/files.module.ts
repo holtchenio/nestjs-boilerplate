@@ -3,16 +3,16 @@ import {
   Module,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { FilesLocalController } from './files.controller';
+import { FilesLocalController } from './files.controller.js';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { diskStorage } from 'multer';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util.js';
 
-import { FilesLocalService } from './files.service';
+import { FilesLocalService } from './files.service.js';
 
-import { PrismaFilePersistenceModule } from '../../persistence/prisma/prisma-persistence.module';
-import { AllConfigType } from '../../../../config/config.type';
+import { PrismaFilePersistenceModule } from '../../persistence/prisma/prisma-persistence.module.js';
+import { AllConfigType } from '../../../../config/config.type.js';
 
 const infrastructurePersistenceModule = PrismaFilePersistenceModule;
 

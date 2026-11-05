@@ -1,15 +1,16 @@
+import { type Mock } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { PrismaService } from '../database/prisma.service';
-import { MailQueueService } from '../queue/mail-queue.service';
-import { SessionRevocationCache } from '../session/session-revocation.cache';
-import { LoginAttemptService } from './login-attempt';
-import { SessionService } from '../session/session.service';
-import { UsersService } from '../users/users.service';
+import { AuthService } from './auth.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { MailQueueService } from '../queue/mail-queue.service.js';
+import { SessionRevocationCache } from '../session/session-revocation.cache.js';
+import { LoginAttemptService } from './login-attempt.js';
+import { SessionService } from '../session/session.service.js';
+import { UsersService } from '../users/users.service.js';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { User } from '../users/domain/user';
-import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
+import { User } from '../users/domain/user.js';
+import { AuthRegisterLoginDto } from './dto/auth-register-login.dto.js';
 
 describe('AuthService.resetPassword', () => {
   const user = {
@@ -22,29 +23,29 @@ describe('AuthService.resetPassword', () => {
   /**
    * @param update
    */
-  function service(update: jest.Mock): {
+  function service(update: Mock): {
     auth: AuthService;
-    session: { deleteByUserId: jest.Mock };
+    session: { deleteByUserId: Mock };
   } {
     const jwtService = {
-      decode: jest.fn().mockReturnValue({ forgotUserId: user.id }),
-      verifyAsync: jest.fn().mockResolvedValue({}),
+      decode: vi.fn().mockReturnValue({ forgotUserId: user.id }),
+      verifyAsync: vi.fn().mockResolvedValue({}),
     } as unknown as JwtService;
     const usersService = {
-      findById: jest.fn().mockResolvedValue(user),
+      findById: vi.fn().mockResolvedValue(user),
       update,
     } as unknown as UsersService;
     const session = {
-      deleteByUserId: jest.fn().mockResolvedValue([]),
-      recordAudit: jest.fn().mockResolvedValue(undefined),
+      deleteByUserId: vi.fn().mockResolvedValue([]),
+      recordAudit: vi.fn().mockResolvedValue(undefined),
     };
     const prisma = {
-      runInTransaction: jest.fn(
+      runInTransaction: vi.fn(
         async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx),
       ),
     } as unknown as PrismaService;
     const configService = {
-      getOrThrow: jest.fn().mockReturnValue('forgot-secret'),
+      getOrThrow: vi.fn().mockReturnValue('forgot-secret'),
     } as unknown as ConfigService;
 
     return {
@@ -54,12 +55,12 @@ describe('AuthService.resetPassword', () => {
         session as unknown as SessionService,
         configService,
         prisma,
-        { enqueue: jest.fn() } as unknown as MailQueueService,
-        { revoke: jest.fn() } as unknown as SessionRevocationCache,
+        { enqueue: vi.fn() } as unknown as MailQueueService,
+        { revoke: vi.fn() } as unknown as SessionRevocationCache,
         {
-          assertAllowed: jest.fn(),
-          recordFailure: jest.fn(),
-          clear: jest.fn(),
+          assertAllowed: vi.fn(),
+          recordFailure: vi.fn(),
+          clear: vi.fn(),
         } as unknown as LoginAttemptService,
       ),
       session,
@@ -67,7 +68,7 @@ describe('AuthService.resetPassword', () => {
   }
 
   it('should update the password and delete sessions on the same transaction client', async () => {
-    const update = jest.fn().mockResolvedValue(user);
+    const update = vi.fn().mockResolvedValue(user);
     const { auth, session } = service(update);
 
     await auth.resetPassword('token', 'new-secret');
@@ -81,7 +82,7 @@ describe('AuthService.resetPassword', () => {
   });
 
   it('should reject the transaction when the password update fails', async () => {
-    const update = jest.fn().mockRejectedValue(new Error('update failed'));
+    const update = vi.fn().mockRejectedValue(new Error('update failed'));
     const { auth, session } = service(update);
 
     await expect(auth.resetPassword('token', 'new-secret')).rejects.toThrow(
@@ -97,23 +98,23 @@ describe('AuthService.resetPassword', () => {
 
 describe('AuthService.register', () => {
   it('should enqueue a confirm-email job without a token', async () => {
-    const enqueue = jest.fn().mockResolvedValue('mail:confirm-email:3:1');
+    const enqueue = vi.fn().mockResolvedValue('mail:confirm-email:3:1');
     const auth = new AuthService(
-      { signAsync: jest.fn() } as unknown as JwtService,
+      { signAsync: vi.fn() } as unknown as JwtService,
       {
-        create: jest.fn().mockResolvedValue({ id: 3 }),
+        create: vi.fn().mockResolvedValue({ id: 3 }),
       } as unknown as UsersService,
       {} as SessionService,
       {
-        getOrThrow: jest.fn().mockReturnValue('en'),
+        getOrThrow: vi.fn().mockReturnValue('en'),
       } as unknown as ConfigService,
       {} as PrismaService,
       { enqueue } as unknown as MailQueueService,
-      { revoke: jest.fn() } as unknown as SessionRevocationCache,
+      { revoke: vi.fn() } as unknown as SessionRevocationCache,
       {
-        assertAllowed: jest.fn(),
-        recordFailure: jest.fn(),
-        clear: jest.fn(),
+        assertAllowed: vi.fn(),
+        recordFailure: vi.fn(),
+        clear: vi.fn(),
       } as unknown as LoginAttemptService,
     );
 
@@ -138,7 +139,7 @@ describe('AuthService.register', () => {
 describe('AuthService.refreshToken', () => {
   it('should revoke the session when a consumed token is reused with grace 0', async () => {
     const session = {
-      findRefreshByHash: jest.fn().mockResolvedValue({
+      findRefreshByHash: vi.fn().mockResolvedValue({
         id: 'refresh-1',
         sessionId: 'session-1',
         expiresAt: new Date(Date.now() + 60_000),
@@ -149,30 +150,30 @@ describe('AuthService.refreshToken', () => {
         sessionExpiresAt: new Date(Date.now() + 60_000),
         userId: 7,
       }),
-      findRefreshById: jest.fn(),
-      revokeFamily: jest.fn(),
-      recordAudit: jest.fn(),
+      findRefreshById: vi.fn(),
+      revokeFamily: vi.fn(),
+      recordAudit: vi.fn(),
     };
     const auth = new AuthService(
       {} as JwtService,
       {} as UsersService,
       session as unknown as SessionService,
       {
-        getOrThrow: jest.fn((key: string) =>
+        getOrThrow: vi.fn((key: string) =>
           key === 'auth.reuseGraceSeconds' ? 0 : 'secret_for_refresh',
         ),
       } as unknown as ConfigService,
       {
-        runInTransaction: jest.fn(
+        runInTransaction: vi.fn(
           async (fn: (client: object) => Promise<unknown>) => fn({}),
         ),
       } as unknown as PrismaService,
       {} as MailQueueService,
-      { revoke: jest.fn() } as unknown as SessionRevocationCache,
+      { revoke: vi.fn() } as unknown as SessionRevocationCache,
       {
-        assertAllowed: jest.fn(),
-        recordFailure: jest.fn(),
-        clear: jest.fn(),
+        assertAllowed: vi.fn(),
+        recordFailure: vi.fn(),
+        clear: vi.fn(),
       } as unknown as LoginAttemptService,
     );
 

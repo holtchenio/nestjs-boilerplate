@@ -1,2 +1,2 @@
 pnpm run lint
-pnpm exec jest --passWithNoTests
+pnpm test

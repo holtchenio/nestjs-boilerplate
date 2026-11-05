@@ -1,9 +1,9 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { FilesS3PresignedService } from './files.service';
-import { FileUploadDto } from './dto/file.dto';
-import { FileResponseDto } from './dto/file-response.dto';
+import { FilesS3PresignedService } from './files.service.js';
+import { FileUploadDto } from './dto/file.dto.js';
+import { FileResponseDto } from './dto/file-response.dto.js';
 
 @ApiTags('Files')
 @Controller({

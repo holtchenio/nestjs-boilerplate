@@ -3,22 +3,22 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { NullableType } from '../utils/types/nullable.type';
-import { FilterUserDto, SortUserDto } from './dto/query-user.dto';
-import { UserRepository } from './infrastructure/persistence/user.repository';
-import { User } from './domain/user';
+import { CreateUserDto } from './dto/create-user.dto.js';
+import { NullableType } from '../utils/types/nullable.type.js';
+import { FilterUserDto, SortUserDto } from './dto/query-user.dto.js';
+import { UserRepository } from './infrastructure/persistence/user.repository.js';
+import { User } from './domain/user.js';
 import bcrypt from 'bcryptjs';
-import { AuthProvidersEnum } from '../auth/auth-providers.enum';
-import { FilesService } from '../files/files.service';
-import { RoleEnum } from '../roles/roles.enum';
-import { StatusEnum } from '../statuses/statuses.enum';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { FileType } from '../files/domain/file';
-import { Role } from '../roles/domain/role';
-import { Status } from '../statuses/domain/status';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { DbClient } from '../database/prisma.service';
+import { AuthProvidersEnum } from '../auth/auth-providers.enum.js';
+import { FilesService } from '../files/files.service.js';
+import { RoleEnum } from '../roles/roles.enum.js';
+import { StatusEnum } from '../statuses/statuses.enum.js';
+import { IPaginationOptions } from '../utils/types/pagination-options.js';
+import { FileType } from '../files/domain/file.js';
+import { Role } from '../roles/domain/role.js';
+import { Status } from '../statuses/domain/status.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
+import { DbClient } from '../database/prisma.service.js';
 
 @Injectable()
 export class UsersService {

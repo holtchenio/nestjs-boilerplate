@@ -1,10 +1,10 @@
-import { DbClient } from '../../../database/prisma.service';
-import { DeepPartial } from '../../../utils/types/deep-partial.type';
-import { NullableType } from '../../../utils/types/nullable.type';
-import { IPaginationOptions } from '../../../utils/types/pagination-options';
-import { User } from '../../domain/user';
+import { DbClient } from '../../../database/prisma.service.js';
+import { DeepPartial } from '../../../utils/types/deep-partial.type.js';
+import { NullableType } from '../../../utils/types/nullable.type.js';
+import { IPaginationOptions } from '../../../utils/types/pagination-options.js';
+import { User } from '../../domain/user.js';
 
-import { FilterUserDto, SortUserDto } from '../../dto/query-user.dto';
+import { FilterUserDto, SortUserDto } from '../../dto/query-user.dto.js';
 
 export abstract class UserRepository {
   abstract create(

@@ -3,10 +3,10 @@ import {
   Module,
 } from '@nestjs/common';
 
-import { RedisModule } from '../cache/redis.module';
-import { PrismaSessionPersistenceModule } from './infrastructure/persistence/prisma/prisma-persistence.module';
-import { SessionRevocationCache } from './session-revocation.cache';
-import { SessionService } from './session.service';
+import { RedisModule } from '../cache/redis.module.js';
+import { PrismaSessionPersistenceModule } from './infrastructure/persistence/prisma/prisma-persistence.module.js';
+import { SessionRevocationCache } from './session-revocation.cache.js';
+import { SessionService } from './session.service.js';
 
 const infrastructurePersistenceModule = PrismaSessionPersistenceModule;
 

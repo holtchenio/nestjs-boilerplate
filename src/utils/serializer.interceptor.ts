@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import deepResolvePromises from './deep-resolver';
+import deepResolvePromises from './deep-resolver.js';
 
 @Injectable()
 export class ResolvePromisesInterceptor implements NestInterceptor {

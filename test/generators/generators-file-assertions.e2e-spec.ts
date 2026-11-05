@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -6,10 +6,10 @@ import type {
   GeneratedEntity,
   GeneratedProperty,
   ReferenceProperty,
-} from './fixtures/matrix';
-import { entityPaths, matrix } from './fixtures/matrix';
+} from './fixtures/matrix.js';
+import { entityPaths, matrix } from './fixtures/matrix.js';
 
-const REPO_ROOT = resolve(__dirname, '..', '..');
+const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
 const SRC = resolve(REPO_ROOT, 'src');
 
 function readFile(absPath: string): string {

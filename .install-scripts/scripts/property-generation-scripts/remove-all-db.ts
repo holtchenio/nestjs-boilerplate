@@ -1,4 +1,4 @@
-import replace from '../../helpers/replace';
+import replace from '../../helpers/replace.js';
 import path from 'path';
 import fs from 'fs';
 

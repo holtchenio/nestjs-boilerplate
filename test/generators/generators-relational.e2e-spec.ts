@@ -1,9 +1,9 @@
-import { describe, expect, it, beforeAll } from '@jest/globals';
+import { describe, expect, it, beforeAll } from 'vitest';
 import request from 'supertest';
 
-import { APP_URL } from '../utils/constants';
-import { loginAsAdmin, type AdminSession } from './helpers/auth';
-import { buildArticlePayload } from './helpers/payloads-relational';
+import { APP_URL } from '../utils/constants.js';
+import { loginAsAdmin, type AdminSession } from './helpers/auth.js';
+import { buildArticlePayload } from './helpers/payloads-relational.js';
 
 describe('Generators — relational CRUD on /api/v1/articles', () => {
   let session: AdminSession;

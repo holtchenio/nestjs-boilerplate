@@ -9,10 +9,10 @@ import {
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from '../auth/auth.service';
-import { AuthFacebookService } from './auth-facebook.service';
-import { AuthFacebookLoginDto } from './dto/auth-facebook-login.dto';
-import { LoginResponseDto } from '../auth/dto/login-response.dto';
+import { AuthService } from '../auth/auth.service.js';
+import { AuthFacebookService } from './auth-facebook.service.js';
+import { AuthFacebookLoginDto } from './dto/auth-facebook-login.dto.js';
+import { LoginResponseDto } from '../auth/dto/login-response.dto.js';
 
 @ApiTags('Auth')
 @Controller({

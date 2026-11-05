@@ -3,17 +3,17 @@ import {
   Module,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { FilesS3PresignedController } from './files.controller';
+import { FilesS3PresignedController } from './files.controller.js';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util.js';
 import { S3Client } from '@aws-sdk/client-s3';
 import multerS3 from 'multer-s3';
 
-import { FilesS3PresignedService } from './files.service';
+import { FilesS3PresignedService } from './files.service.js';
 
-import { PrismaFilePersistenceModule } from '../../persistence/prisma/prisma-persistence.module';
-import { AllConfigType } from '../../../../config/config.type';
+import { PrismaFilePersistenceModule } from '../../persistence/prisma/prisma-persistence.module.js';
+import { AllConfigType } from '../../../../config/config.type.js';
 
 const infrastructurePersistenceModule = PrismaFilePersistenceModule;
 

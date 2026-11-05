@@ -1,8 +1,8 @@
-import { FileType } from '../../../../files/domain/file';
-import { Role } from '../../../../roles/domain/role';
-import { Status } from '../../../../statuses/domain/status';
-import { Prisma } from '../../../../generated/prisma/client';
-import { User } from '../../../domain/user';
+import { FileType } from '../../../../files/domain/file.js';
+import { Role } from '../../../../roles/domain/role.js';
+import { Status } from '../../../../statuses/domain/status.js';
+import { Prisma } from '../../../../generated/prisma/client.js';
+import { User } from '../../../domain/user.js';
 
 export const userWithRelations = {
   photo: true,

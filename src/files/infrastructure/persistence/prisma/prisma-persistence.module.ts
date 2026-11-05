@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { FileRepository } from '../file.repository';
-import { FilePrismaRepository } from './file.repository';
+import { FileRepository } from '../file.repository.js';
+import { FilePrismaRepository } from './file.repository.js';
 
 @Module({
   providers: [

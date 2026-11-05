@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
-import { AllConfigType } from '../../config/config.type';
+import { AllConfigType } from '../../config/config.type.js';
 
 export type RequestWithRefreshToken = {
   headers: {

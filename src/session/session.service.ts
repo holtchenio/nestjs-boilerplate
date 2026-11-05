@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { DbClient } from '../database/prisma.service';
-import { User } from '../users/domain/user';
-import { NullableType } from '../utils/types/nullable.type';
-import { Session } from './domain/session';
+import { DbClient } from '../database/prisma.service.js';
+import { User } from '../users/domain/user.js';
+import { NullableType } from '../utils/types/nullable.type.js';
+import { Session } from './domain/session.js';
 import {
   AuditEventDraft,
   RefreshTokenRecord,
   SessionDraft,
   SessionRepository,
   SessionSummary,
-} from './infrastructure/persistence/session.repository';
+} from './infrastructure/persistence/session.repository.js';
 
 @Injectable()
 export class SessionService {

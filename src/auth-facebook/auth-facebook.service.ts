@@ -1,9 +1,9 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SocialInterface } from '../social/interfaces/social.interface';
-import { FacebookInterface } from './interfaces/facebook.interface';
-import { AuthFacebookLoginDto } from './dto/auth-facebook-login.dto';
-import { AllConfigType } from '../config/config.type';
+import { SocialInterface } from '../social/interfaces/social.interface.js';
+import { FacebookInterface } from './interfaces/facebook.interface.js';
+import { AuthFacebookLoginDto } from './dto/auth-facebook-login.dto.js';
+import { AllConfigType } from '../config/config.type.js';
 
 @Injectable()
 export class AuthFacebookService {

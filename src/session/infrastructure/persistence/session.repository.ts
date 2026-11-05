@@ -1,7 +1,7 @@
-import { DbClient } from '../../../database/prisma.service';
-import { User } from '../../../users/domain/user';
-import { NullableType } from '../../../utils/types/nullable.type';
-import { Session } from '../../domain/session';
+import { DbClient } from '../../../database/prisma.service.js';
+import { User } from '../../../users/domain/user.js';
+import { NullableType } from '../../../utils/types/nullable.type.js';
+import { Session } from '../../domain/session.js';
 
 export type SessionDraft = {
   user: User;

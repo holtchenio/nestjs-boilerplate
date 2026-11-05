@@ -1,6 +1,6 @@
 import { registerAs } from '@nestjs/config';
-import { AppConfig } from './app-config.type';
-import validateConfig from '.././utils/validate-config';
+import { AppConfig } from './app-config.type.js';
+import validateConfig from '.././utils/validate-config.js';
 import {
   IsEnum,
   IsInt,

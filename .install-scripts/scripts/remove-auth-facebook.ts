@@ -1,4 +1,4 @@
-import replace from '../helpers/replace';
+import replace from '../helpers/replace.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -15,11 +15,11 @@ const removeFacebookAuth = () => {
         replace: '',
       },
       {
-        find: /\s*import \{ AuthFacebookModule \} from '\.\/auth\-facebook\/auth\-facebook\.module'\;.*/g,
+        find: /\s*import \{ AuthFacebookModule \} from '\.\/auth\-facebook\/auth\-facebook\.module\.js'\;.*/g,
         replace: '',
       },
       {
-        find: /\s*import facebookConfig from '\.\/auth\-facebook\/config\/facebook\.config'\;.*/g,
+        find: /\s*import facebookConfig from '\.\/auth\-facebook\/config\/facebook\.config\.js'\;.*/g,
         replace: '',
       },
     ],

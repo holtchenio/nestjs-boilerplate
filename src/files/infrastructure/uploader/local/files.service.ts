@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { FileRepository } from '../../persistence/file.repository';
-import { AllConfigType } from '../../../../config/config.type';
-import { FileType } from '../../../domain/file';
+import { FileRepository } from '../../persistence/file.repository.js';
+import { AllConfigType } from '../../../../config/config.type.js';
+import { FileType } from '../../../domain/file.js';
 
 @Injectable()
 export class FilesLocalService {

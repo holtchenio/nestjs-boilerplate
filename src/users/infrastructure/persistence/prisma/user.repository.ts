@@ -3,14 +3,17 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma } from '../../../../generated/prisma/client';
-import { DbClient, PrismaService } from '../../../../database/prisma.service';
-import { NullableType } from '../../../../utils/types/nullable.type';
-import { IPaginationOptions } from '../../../../utils/types/pagination-options';
-import { User } from '../../../domain/user';
-import { FilterUserDto, SortUserDto } from '../../../dto/query-user.dto';
-import { UserRepository } from '../user.repository';
-import { UserMapper, userWithRelations } from './user.mapper';
+import { Prisma } from '../../../../generated/prisma/client.js';
+import {
+  DbClient,
+  PrismaService,
+} from '../../../../database/prisma.service.js';
+import { NullableType } from '../../../../utils/types/nullable.type.js';
+import { IPaginationOptions } from '../../../../utils/types/pagination-options.js';
+import { User } from '../../../domain/user.js';
+import { FilterUserDto, SortUserDto } from '../../../dto/query-user.dto.js';
+import { UserRepository } from '../user.repository.js';
+import { UserMapper, userWithRelations } from './user.mapper.js';
 
 const userSortFields = new Set([
   'id',

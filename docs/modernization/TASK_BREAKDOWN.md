@@ -495,4 +495,5 @@
 | T4.1–T4.8 | 会话管理、Cookie/CSRF、认证限流和 access `kid` 已接上。本地 e2e 27 项通过。不带 `x-auth-mode: cookie` 时响应仍返回 `refreshToken` |
 | T3.1–T3.6 | 代码已落地。本机 live 与 Redis 正常时的 ready 为 200。暂停 Redis 后 ready 为 503，live 仍为 200，响应不含连接串 |
 | T3.7 | dev/test/ci 启动脚本等待 Redis、执行 Prisma 迁移并拉起 Worker。`tests` 项目里的关系型 Docker e2e 为 23 项通过 |
-| T5.0 至 T7.5 | 未开始。阶段 5 开始前需要确认是否切换 ESM |
+| T5.0–T5.6 | 已切到 ESM。`prisma generate` 使用 `moduleFormat=esm` 后 `nest build` 成功。`node dist/main.js` 监听成功，`node dist/worker.js` 完成装载。Redis 队列一发一收返回 echo。Vitest 单元 22 项、e2e 27 项通过。`.hygen.js` 改为具名导出后，`hygen generate relational-resource` 能生成并已清理探针文件。属性生成器钩子改为 `prompt.cjs` |
+| T6.1 至 T7.5 | 未开始 |

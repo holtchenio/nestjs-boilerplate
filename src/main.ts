@@ -11,10 +11,10 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
 import { Logger } from 'nestjs-pino';
-import { AppModule } from './app.module';
-import validationOptions from './utils/validation-options';
-import { AllConfigType } from './config/config.type';
-import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
+import { AppModule } from './app.module.js';
+import validationOptions from './utils/validation-options.js';
+import { AllConfigType } from './config/config.type.js';
+import { ResolvePromisesInterceptor } from './utils/serializer.interceptor.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

@@ -1,10 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { AllConfigType } from '../config/config.type';
-import { MAIL_QUEUE } from './mail-job';
-import { mailDefaultJobOptions } from './mail-job.options';
-import { MailQueueService } from './mail-queue.service';
+import { AllConfigType } from '../config/config.type.js';
+import { MAIL_QUEUE } from './mail-job.js';
+import { mailDefaultJobOptions } from './mail-job.options.js';
+import { MailQueueService } from './mail-queue.service.js';
 
 @Global()
 @Module({

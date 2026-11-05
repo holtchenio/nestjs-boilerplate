@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
-import { AllConfigType } from '../../config/config.type';
-import { RequestWithRefreshToken } from './refresh-token.guard';
+import { AllConfigType } from '../../config/config.type.js';
+import { RequestWithRefreshToken } from './refresh-token.guard.js';
 
 /**
  * Cookie 模式下，消费刷新令牌的请求必须带匹配的 CSRF 和允许的 Origin。

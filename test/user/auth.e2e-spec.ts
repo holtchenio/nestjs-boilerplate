@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto';
-import { describe, expect, it, beforeAll } from '@jest/globals';
+import { describe, expect, it, beforeAll } from 'vitest';
 import request from 'supertest';
 import {
   APP_URL,
@@ -7,9 +7,9 @@ import {
   TESTER_PASSWORD,
   MAIL_HOST,
   MAIL_PORT,
-} from '../utils/constants';
-import type { MailMessage } from '../utils/types/mail-message.type';
-import { waitForMailHash } from '../utils/wait-for-mail';
+} from '../utils/constants.js';
+import type { MailMessage } from '../utils/types/mail-message.type.js';
+import { waitForMailHash } from '../utils/wait-for-mail.js';
 
 /**
  * @param payload

@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
-import { MAIL_QUEUE, MailJob, mailJobId } from './mail-job';
+import { MAIL_QUEUE, MailJob, mailJobId } from './mail-job.js';
 
 @Injectable()
 export class MailQueueService {

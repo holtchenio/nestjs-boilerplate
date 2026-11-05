@@ -1,20 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '../../../../generated/prisma/client';
-import { DbClient, PrismaService } from '../../../../database/prisma.service';
-import { User } from '../../../../users/domain/user';
-import { NullableType } from '../../../../utils/types/nullable.type';
-import { Session } from '../../../domain/session';
+import { Prisma } from '../../../../generated/prisma/client.js';
+import {
+  DbClient,
+  PrismaService,
+} from '../../../../database/prisma.service.js';
+import { User } from '../../../../users/domain/user.js';
+import { NullableType } from '../../../../utils/types/nullable.type.js';
+import { Session } from '../../../domain/session.js';
 import {
   AuditEventDraft,
   RefreshTokenRecord,
   SessionDraft,
   SessionRepository,
   SessionSummary,
-} from '../session.repository';
+} from '../session.repository.js';
 import {
   UserMapper,
   userWithRelations,
-} from '../../../../users/infrastructure/persistence/prisma/user.mapper';
+} from '../../../../users/infrastructure/persistence/prisma/user.mapper.js';
 
 const sessionWithUser = {
   user: { include: userWithRelations },

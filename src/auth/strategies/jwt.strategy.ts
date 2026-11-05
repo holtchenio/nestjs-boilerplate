@@ -3,12 +3,12 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { resolveAccessSecret } from '../access-token-secret';
-import { OrNeverType } from '../../utils/types/or-never.type';
-import { JwtPayloadType } from './types/jwt-payload.type';
-import { AllConfigType } from '../../config/config.type';
-import { SessionService } from '../../session/session.service';
-import { SessionRevocationCache } from '../../session/session-revocation.cache';
+import { resolveAccessSecret } from '../access-token-secret.js';
+import { OrNeverType } from '../../utils/types/or-never.type.js';
+import { JwtPayloadType } from './types/jwt-payload.type.js';
+import { AllConfigType } from '../../config/config.type.js';
+import { SessionService } from '../../session/session.service.js';
+import { SessionRevocationCache } from '../../session/session-revocation.cache.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {

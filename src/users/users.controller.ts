@@ -12,8 +12,8 @@ import {
   HttpCode,
   SerializeOptions,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -21,21 +21,21 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Roles } from '../roles/roles.decorator';
-import { RoleEnum } from '../roles/roles.enum';
+import { Roles } from '../roles/roles.decorator.js';
+import { RoleEnum } from '../roles/roles.enum.js';
 import { AuthGuard } from '@nestjs/passport';
 
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
-} from '../utils/dto/infinity-pagination-response.dto';
-import { NullableType } from '../utils/types/nullable.type';
-import { QueryUserDto } from './dto/query-user.dto';
-import { User } from './domain/user';
-import { UsersService } from './users.service';
-import { RolesGuard } from '../roles/roles.guard';
-import { AuthService } from '../auth/auth.service';
-import { infinityPagination } from '../utils/infinity-pagination';
+} from '../utils/dto/infinity-pagination-response.dto.js';
+import { NullableType } from '../utils/types/nullable.type.js';
+import { QueryUserDto } from './dto/query-user.dto.js';
+import { User } from './domain/user.js';
+import { UsersService } from './users.service.js';
+import { RolesGuard } from '../roles/roles.guard.js';
+import { AuthService } from '../auth/auth.service.js';
+import { infinityPagination } from '../utils/infinity-pagination.js';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)

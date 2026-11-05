@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '../cache/redis.service';
-import { AllConfigType } from '../config/config.type';
+import { RedisService } from '../cache/redis.service.js';
+import { AllConfigType } from '../config/config.type.js';
 
 /**
  * 按邮箱和 IP 记录登录失败。达到阈值后，即使密码正确也返回 429。

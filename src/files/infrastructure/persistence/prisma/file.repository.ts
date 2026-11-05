@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { DbClient, PrismaService } from '../../../../database/prisma.service';
-import { NullableType } from '../../../../utils/types/nullable.type';
-import { FileType } from '../../../domain/file';
-import { FileRepository } from '../file.repository';
+import {
+  DbClient,
+  PrismaService,
+} from '../../../../database/prisma.service.js';
+import { NullableType } from '../../../../utils/types/nullable.type.js';
+import { FileType } from '../../../domain/file.js';
+import { FileRepository } from '../file.repository.js';
 
 @Injectable()
 export class FilePrismaRepository implements FileRepository {

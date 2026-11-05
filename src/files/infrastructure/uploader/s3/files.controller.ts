@@ -14,8 +14,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { FilesS3Service } from './files.service';
-import { FileResponseDto } from './dto/file-response.dto';
+import { FilesS3Service } from './files.service.js';
+import { FileResponseDto } from './dto/file-response.dto.js';
 
 @ApiTags('Files')
 @Controller({
