@@ -1,7 +1,12 @@
 import { registerAs } from '@nestjs/config';
 
 import { Logger } from '@nestjs/common';
-import { IsBooleanString, IsOptional, IsString } from 'class-validator';
+import {
+  IsBooleanString,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import validateConfig from '../../utils/validate-config';
 import { AuthConfig } from './auth-config.type';
 import ms from 'ms';
@@ -59,6 +64,14 @@ class EnvironmentVariablesValidator {
   @IsBooleanString()
   @IsOptional()
   AUTH_UNIFORM_ERRORS: string;
+
+  @IsBooleanString()
+  @IsOptional()
+  AUTH_SESSION_CHECK: string;
+
+  @IsNumberString()
+  @IsOptional()
+  AUTH_REFRESH_REUSE_GRACE_SECONDS: string;
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -76,5 +89,9 @@ export default registerAs<AuthConfig>('auth', () => {
     confirmEmailExpires: process.env
       .AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN as ms.StringValue,
     uniformErrors: process.env.AUTH_UNIFORM_ERRORS === 'true',
+    sessionCheck: process.env.AUTH_SESSION_CHECK !== 'false',
+    reuseGraceSeconds: Number(
+      process.env.AUTH_REFRESH_REUSE_GRACE_SECONDS ?? '0',
+    ),
   };
 });

@@ -6,8 +6,6 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import ms from 'ms';
-import crypto from 'crypto';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
@@ -18,7 +16,6 @@ import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { NullableType } from '../utils/types/nullable.type';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { ConfigService } from '@nestjs/config';
-import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import { UsersService } from '../users/users.service';
 import { AllConfigType } from '../config/config.type';
@@ -27,9 +24,12 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
-import { PrismaService } from '../database/prisma.service';
+import { DbClient, PrismaService } from '../database/prisma.service';
 import { MailQueueService } from '../queue/mail-queue.service';
+import { RefreshTokenRecord } from '../session/infrastructure/persistence/session.repository';
 import { forgotPasswordSecret } from './forgot-password-secret';
+import { createRefreshToken, refreshTokenHash } from './refresh-token';
+import { SessionRevocationCache } from './session-revocation.cache';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +40,7 @@ export class AuthService {
     private readonly configService: ConfigService<AllConfigType>,
     private readonly prisma: PrismaService,
     private readonly mailQueue: MailQueueService,
+    private readonly revocation: SessionRevocationCache,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -74,21 +75,11 @@ export class AuthService {
       });
     }
 
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
+    const { session, refreshToken } = await this.issueSession(user);
+    const { token, tokenExpires } = await this.getTokensData({
       id: user.id,
       role: user.role,
       sessionId: session.id,
-      hash,
     });
 
     return {
@@ -171,25 +162,11 @@ export class AuthService {
       });
     }
 
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
-    const {
-      token: jwtToken,
-      refreshToken,
-      tokenExpires,
-    } = await this.getTokensData({
+    const { session, refreshToken } = await this.issueSession(user);
+    const { token: jwtToken, tokenExpires } = await this.getTokensData({
       id: user.id,
       role: user.role,
       sessionId: session.id,
-      hash,
     });
 
     return {
@@ -399,15 +376,25 @@ export class AuthService {
 
     user.password = password;
 
-    await this.prisma.runInTransaction(async (tx) => {
-      await this.sessionService.deleteByUserId(
+    const revokedIds = await this.prisma.runInTransaction(async (tx) => {
+      const ids = await this.sessionService.deleteByUserId(
         {
           userId: user.id,
+          reason: 'password_reset',
         },
         tx,
       );
       await this.usersService.update(user.id, user, tx);
+      await this.sessionService.recordAudit(
+        {
+          type: 'password_reset',
+          userId: Number(user.id),
+        },
+        tx,
+      );
+      return ids;
     });
+    await this.revocation.revoke(revokedIds, 'password_reset');
   }
 
   async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {
@@ -468,10 +455,26 @@ export class AuthService {
           },
         });
       } else {
-        await this.sessionService.deleteByUserIdWithExclude({
-          userId: currentUser.id,
-          excludeSessionId: userJwtPayload.sessionId,
+        const revokedIds = await this.prisma.runInTransaction(async (tx) => {
+          const ids = await this.sessionService.deleteByUserIdWithExclude(
+            {
+              userId: currentUser.id,
+              excludeSessionId: userJwtPayload.sessionId,
+              reason: 'password_change',
+            },
+            tx,
+          );
+          await this.sessionService.recordAudit(
+            {
+              type: 'password_changed',
+              userId: Number(currentUser.id),
+              sessionId: userJwtPayload.sessionId,
+            },
+            tx,
+          );
+          return ids;
         });
+        await this.revocation.revoke(revokedIds, 'password_change');
       }
     }
 
@@ -503,51 +506,148 @@ export class AuthService {
     return this.usersService.findById(userJwtPayload.id);
   }
 
+  /**
+   * 用一次性刷新令牌轮换会话。重用会撤销整个会话后再返回 401。
+   * @param rawToken
+   */
   async refreshToken(
-    data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>,
+    rawToken: string,
   ): Promise<Omit<LoginResponseDto, 'user'>> {
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
+    const secret = this.configService.getOrThrow('auth.refreshSecret', {
+      infer: true,
+    });
+    const now = new Date();
+    const outcome = await this.prisma.runInTransaction(async (tx) => {
+      const current = await this.sessionService.findRefreshByHash(
+        refreshTokenHash(secret, rawToken),
+        tx,
+      );
+      if (
+        !current ||
+        current.revokedAt ||
+        current.sessionRevokedAt ||
+        current.expiresAt <= now ||
+        current.sessionExpiresAt <= now
+      ) {
+        return { kind: 'invalid' as const };
+      }
+      if (current.consumedAt) {
+        const reused = await this.reuseDetected(current, now, tx);
+        return reused
+          ? { kind: 'reuse' as const, sessionId: current.sessionId }
+          : { kind: 'invalid' as const };
+      }
 
-    const session = await this.sessionService.updateByHash(
-      { id: data.sessionId, hash: data.hash },
-      { hash },
-    );
+      const refreshToken = createRefreshToken();
+      const expiresAt = this.refreshExpiresAt(now);
+      const next = await this.sessionService.issueRefresh(
+        {
+          sessionId: current.sessionId,
+          tokenHash: refreshTokenHash(secret, refreshToken),
+          expiresAt,
+        },
+        tx,
+      );
+      const count = await this.sessionService.consumeRefresh(
+        current.id,
+        next.id,
+        tx,
+      );
+      if (count !== 1) {
+        await this.sessionService.revokeFamily(current.sessionId, 'reuse', tx);
+        await this.sessionService.recordAudit(
+          {
+            type: 'refresh_reused',
+            userId: current.userId,
+            sessionId: current.sessionId,
+          },
+          tx,
+        );
+        return { kind: 'reuse' as const, sessionId: current.sessionId };
+      }
+      await this.sessionService.touchLastUsed(current.sessionId, tx);
+      await this.sessionService.recordAudit(
+        {
+          type: 'refresh_succeeded',
+          userId: current.userId,
+          sessionId: current.sessionId,
+        },
+        tx,
+      );
+      return {
+        kind: 'ok' as const,
+        sessionId: current.sessionId,
+        userId: current.userId,
+        refreshToken,
+      };
+    });
 
-    if (!session) {
+    if (outcome.kind === 'reuse') {
+      await this.revocation.revoke([outcome.sessionId], 'reuse');
+      throw new UnauthorizedException();
+    }
+    if (outcome.kind !== 'ok') {
       throw new UnauthorizedException();
     }
 
-    const user = await this.usersService.findById(session.user.id);
-
+    const user = await this.usersService.findById(outcome.userId);
     if (!user?.role) {
       throw new UnauthorizedException();
     }
 
-    const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: session.user.id,
-      role: {
-        id: user.role.id,
-      },
-      sessionId: session.id,
-      hash,
+    const { token, tokenExpires } = await this.getTokensData({
+      id: user.id,
+      role: { id: user.role.id },
+      sessionId: outcome.sessionId,
     });
-
     return {
       token,
-      refreshToken,
+      refreshToken: outcome.refreshToken,
       tokenExpires,
     };
   }
 
+  /**
+   * 撤销该用户的全部会话后软删除用户。
+   * @param userJwtPayload
+   */
   async softDelete(userJwtPayload: JwtPayloadType): Promise<void> {
+    const revokedIds = await this.prisma.runInTransaction(async (tx) => {
+      const ids = await this.sessionService.deleteByUserId(
+        { userId: userJwtPayload.id, reason: 'user_deleted' },
+        tx,
+      );
+      await this.sessionService.recordAudit(
+        {
+          type: 'user_deleted',
+          userId: Number(userJwtPayload.id),
+          sessionId: userJwtPayload.sessionId,
+        },
+        tx,
+      );
+      return ids;
+    });
     await this.usersService.remove(userJwtPayload.id);
+    await this.revocation.revoke(revokedIds, 'user_deleted');
   }
 
-  async logout(data: Pick<JwtPayloadType, 'sessionId'>) {
-    return this.sessionService.deleteById(data.sessionId);
+  /**
+   * 撤销当前会话，并让尚未过期的 access token 立即失效。
+   * @param data
+   */
+  async logout(data: Pick<JwtPayloadType, 'id' | 'sessionId'>): Promise<void> {
+    await this.prisma.runInTransaction(async (tx) => {
+      await this.sessionService.deleteById(data.sessionId, 'logout', tx);
+      await this.sessionService.recordAudit(
+        {
+          type: 'logout',
+          userId: Number(data.id),
+          sessionId: data.sessionId,
+        },
+        tx,
+      );
+    });
+    await this.revocation.revoke([data.sessionId], 'logout');
   }
 
   private invalidLoginException(
@@ -591,49 +691,123 @@ export class AuthService {
     return forgotPasswordSecret(forgotSecret, user.password);
   }
 
+  /**
+   * 创建会话和不透明刷新令牌。库里只保存 HMAC。
+   * @param user
+   */
+  private async issueSession(user: User): Promise<{
+    session: Session;
+    refreshToken: string;
+  }> {
+    const refreshToken = createRefreshToken();
+    const secret = this.configService.getOrThrow('auth.refreshSecret', {
+      infer: true,
+    });
+    const expiresAt = this.refreshExpiresAt(new Date());
+    const session = await this.prisma.runInTransaction(async (tx) => {
+      const created = await this.sessionService.create({ user, expiresAt }, tx);
+      await this.sessionService.issueRefresh(
+        {
+          sessionId: created.id,
+          tokenHash: refreshTokenHash(secret, refreshToken),
+          expiresAt,
+        },
+        tx,
+      );
+      await this.sessionService.recordAudit(
+        {
+          type: 'login_succeeded',
+          userId: Number(user.id),
+          sessionId: created.id,
+        },
+        tx,
+      );
+      return created;
+    });
+    return { session, refreshToken };
+  }
+
+  /**
+   * 已消费令牌再次出现时，宽限为 0 则撤销整个会话。
+   * @param current
+   * @param now
+   * @param tx
+   */
+  private async reuseDetected(
+    current: RefreshTokenRecord,
+    now: Date,
+    tx: DbClient,
+  ): Promise<boolean> {
+    const grace = this.configService.getOrThrow('auth.reuseGraceSeconds', {
+      infer: true,
+    });
+    const consumedAt = current.consumedAt;
+    const withinGrace =
+      grace > 0 &&
+      consumedAt !== null &&
+      now.getTime() - consumedAt.getTime() <= grace * 1000;
+    if (withinGrace && current.replacedById) {
+      const replacement = await this.sessionService.findRefreshById(
+        current.replacedById,
+        tx,
+      );
+      if (replacement && !replacement.consumedAt && !replacement.revokedAt) {
+        return false;
+      }
+    }
+    await this.sessionService.revokeFamily(current.sessionId, 'reuse', tx);
+    await this.sessionService.recordAudit(
+      {
+        type: 'refresh_reused',
+        userId: current.userId,
+        sessionId: current.sessionId,
+      },
+      tx,
+    );
+    return true;
+  }
+
+  /**
+   * @param now
+   */
+  private refreshExpiresAt(now: Date): Date {
+    return new Date(
+      now.getTime() +
+        ms(
+          this.configService.getOrThrow('auth.refreshExpires', {
+            infer: true,
+          }),
+        ),
+    );
+  }
+
+  /**
+   * 只签发 access token。刷新令牌是随机串，不再是 JWT。
+   * @param data
+   */
   private async getTokensData(data: {
     id: User['id'];
     role: User['role'];
     sessionId: Session['id'];
-    hash: Session['hash'];
   }) {
     const tokenExpiresIn = this.configService.getOrThrow('auth.expires', {
       infer: true,
     });
-
     const tokenExpires = Date.now() + ms(tokenExpiresIn);
-
-    const [token, refreshToken] = await Promise.all([
-      await this.jwtService.signAsync(
-        {
-          id: data.id,
-          role: data.role,
-          sessionId: data.sessionId,
-        },
-        {
-          secret: this.configService.getOrThrow('auth.secret', { infer: true }),
-          expiresIn: tokenExpiresIn,
-        },
-      ),
-      await this.jwtService.signAsync(
-        {
-          sessionId: data.sessionId,
-          hash: data.hash,
-        },
-        {
-          secret: this.configService.getOrThrow('auth.refreshSecret', {
-            infer: true,
-          }),
-          expiresIn: this.configService.getOrThrow('auth.refreshExpires', {
-            infer: true,
-          }),
-        },
-      ),
-    ]);
+    const token = await this.jwtService.signAsync(
+      {
+        id: data.id,
+        role: data.role,
+        sessionId: data.sessionId,
+      },
+      {
+        secret: this.configService.getOrThrow('auth.secret', { infer: true }),
+        expiresIn: tokenExpiresIn,
+      },
+    );
 
     return {
       token,
-      refreshToken,
       tokenExpires,
     };
   }

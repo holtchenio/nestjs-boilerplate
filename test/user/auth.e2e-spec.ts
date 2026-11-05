@@ -295,7 +295,7 @@ describe('Auth Module', () => {
       await request(app)
         .get('/api/v1/auth/me')
         .auth(accessToken, { type: 'bearer' })
-        .expect(200);
+        .expect(401);
     });
 
     it('should update profile successfully: /api/v1/auth/me (PATCH)', async () => {

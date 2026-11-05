@@ -3,40 +3,131 @@ import { User } from '../../../users/domain/user';
 import { NullableType } from '../../../utils/types/nullable.type';
 import { Session } from '../../domain/session';
 
+export type SessionDraft = {
+  user: User;
+  expiresAt: Date;
+  deviceName?: string | null;
+  deviceType?: string | null;
+  userAgent?: string | null;
+  ip?: string | null;
+};
+
+export type RefreshTokenRecord = {
+  id: string;
+  sessionId: string;
+  expiresAt: Date;
+  consumedAt: Date | null;
+  revokedAt: Date | null;
+  replacedById: string | null;
+  sessionRevokedAt: Date | null;
+  sessionExpiresAt: Date;
+  userId: number;
+};
+
+export type AuditEventDraft = {
+  type: string;
+  userId?: number | null;
+  sessionId?: string | null;
+  ip?: string | null;
+  userAgent?: string | null;
+};
+
 export abstract class SessionRepository {
   abstract findById(id: Session['id']): Promise<NullableType<Session>>;
 
-  abstract create(
-    data: Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
-  ): Promise<Session>;
+  abstract create(data: SessionDraft, db?: DbClient): Promise<Session>;
 
-  abstract update(
+  /**
+   * @param id
+   * @param reason
+   * @param db
+   */
+  abstract deleteById(
     id: Session['id'],
-    payload: Partial<
-      Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>
-    >,
-  ): Promise<Session | null>;
-
-  abstract updateByHash(
-    conditions: { id: Session['id']; hash: Session['hash'] },
-    payload: Partial<
-      Omit<Session, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>
-    >,
-  ): Promise<Session | null>;
-
-  abstract deleteById(id: Session['id']): Promise<void>;
+    reason: string,
+    db?: DbClient,
+  ): Promise<void>;
 
   /**
    * @param conditions
    * @param db
    */
   abstract deleteByUserId(
-    conditions: { userId: User['id'] },
+    conditions: { userId: User['id']; reason: string },
+    db?: DbClient,
+  ): Promise<string[]>;
+
+  /**
+   * @param conditions
+   * @param db
+   */
+  abstract deleteByUserIdWithExclude(
+    conditions: {
+      userId: User['id'];
+      excludeSessionId: Session['id'];
+      reason: string;
+    },
+    db?: DbClient,
+  ): Promise<string[]>;
+
+  /**
+   * @param data
+   * @param db
+   */
+  abstract issueRefresh(
+    data: { sessionId: string; tokenHash: string; expiresAt: Date },
+    db?: DbClient,
+  ): Promise<{ id: string }>;
+
+  /**
+   * @param tokenHash
+   * @param db
+   */
+  abstract findRefreshByHash(
+    tokenHash: string,
+    db?: DbClient,
+  ): Promise<RefreshTokenRecord | null>;
+
+  /**
+   * @param id
+   * @param db
+   */
+  abstract findRefreshById(
+    id: string,
+    db?: DbClient,
+  ): Promise<{ consumedAt: Date | null; revokedAt: Date | null } | null>;
+
+  /**
+   * @param id
+   * @param replacedById
+   * @param db
+   */
+  abstract consumeRefresh(
+    id: string,
+    replacedById: string,
+    db?: DbClient,
+  ): Promise<number>;
+
+  /**
+   * @param sessionId
+   * @param reason
+   * @param db
+   */
+  abstract revokeFamily(
+    sessionId: string,
+    reason: string,
     db?: DbClient,
   ): Promise<void>;
 
-  abstract deleteByUserIdWithExclude(conditions: {
-    userId: User['id'];
-    excludeSessionId: Session['id'];
-  }): Promise<void>;
+  /**
+   * @param sessionId
+   * @param db
+   */
+  abstract touchLastUsed(sessionId: string, db?: DbClient): Promise<void>;
+
+  /**
+   * @param event
+   * @param db
+   */
+  abstract recordAudit(event: AuditEventDraft, db?: DbClient): Promise<void>;
 }

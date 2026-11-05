@@ -17,7 +17,7 @@
 - [Logout](#logout)
 - [Security hardening](#security-hardening)
 - [Q\&A](#qa)
-  - [After `POST /api/v1/auth/logout` or removing session from the database, the user can still make requests with an `access token` for some time. Why?](#after-post-apiv1authlogout-or-removing-session-from-the-database-the-user-can-still-make-requests-with-an-access-token-for-some-time-why)
+  - [After `POST /api/v1/auth/logout`, can the access token still be used?](#after-post-apiv1authlogout-can-the-access-token-still-be-used)
 
 ---
 
@@ -174,22 +174,7 @@ public me(
 }
 ```
 
-`POST /api/v1/auth/refresh` is the exception: it is guarded by `AuthGuard('jwt-refresh')`, so a different strategy populates `request.user` and the payload is a `JwtRefreshPayloadType` instead:
-
-```typescript
-@Post('refresh')
-@UseGuards(AuthGuard('jwt-refresh'))
-public refresh(
-  @Request() request: RequestWithUser<JwtRefreshPayloadType>,
-): Promise<RefreshResponseDto> {
-  return this.service.refreshToken({
-    sessionId: request.user.sessionId,
-    hash: request.user.hash,
-  });
-}
-```
-
-Always pass the payload type matching the guard on the route — using `JwtPayloadType` on the refresh route (or vice versa) would describe fields that do not exist at runtime.
+`POST /api/v1/auth/refresh` reads an opaque refresh token from `Authorization: Bearer`. It is not a JWT, and the guard does not put a user payload on the request.
 
 The same type works in guards and interceptors, where the request comes from the execution context instead. `RolesGuard` may be applied to routes without an auth guard, so it allows `user` to be absent:
 
@@ -213,9 +198,9 @@ https://github.com/brocoders/nestjs-boilerplate/assets/6001723/f6fdcc89-5ec6-472
 
 ### Support login for multiple devices / Sessions
 
-Boilerplate supports login for multiple devices with a Refresh Token flow. This is possible due to `sessions`. When a user logs in, a new session is created and stored in the database. The session record contains `sessionId (id)`, `userId`, and `hash`.
+Boilerplate supports login for multiple devices with a refresh token flow. Each login creates a session. The refresh token is a random string. The database stores only its HMAC. `sessionId` in the access token is that session's uuid.
 
-On each `POST /api/v1/auth/refresh` request we check `hash` from the database with `hash` from the Refresh Token. If they are equal, we return new `token`, `tokenExpires`, and `refreshToken`. Then we update `hash` in the database to disallow the use of the previous Refresh Token.
+On each `POST /api/v1/auth/refresh` the presented token is consumed and a new one is returned. Presenting a consumed token again revokes that whole session. Old refresh JWTs are rejected.
 
 Because every refresh also rotates the `refreshToken`, the `AUTH_REFRESH_TOKEN_EXPIRES_IN` default of `30d` behaves as a rolling idle window: users who return at least once every 30 days never have to log in again, while a stolen or abandoned refresh token expires on its own.
 
@@ -245,9 +230,9 @@ Security defaults the boilerplate ships with, and what is intentionally left to 
 
 ## Q&A
 
-### After `POST /api/v1/auth/logout` or removing session from the database, the user can still make requests with an `access token` for some time. Why?
+### After `POST /api/v1/auth/logout`, can the access token still be used?
 
-It's because we use `JWT`. `JWTs` are stateless, so we can't revoke them, but don't worry, this is the correct behavior and the access token will expire after the time specified in `AUTH_JWT_TOKEN_EXPIRES_IN` (the default value is 15 minutes). If you still need to revoke `JWT` tokens immediately, you can check if a session exists in [jwt.strategy.ts](https://github.com/brocoders/nestjs-boilerplate/blob/2896589f52d2df025f12069ba82ba4fac1db8ebd/src/auth/strategies/jwt.strategy.ts#L20-L26) on each request. However, it's not recommended because it can affect the application's performance.
+No. Logout revokes the session. The next request with that access token is rejected. The check reads Redis first and PostgreSQL when the cache misses or Redis is unavailable. Clients must sign in again after this upgrade, because existing refresh tokens are no longer JWTs and `sessionId` is a uuid.
 
 ---
 

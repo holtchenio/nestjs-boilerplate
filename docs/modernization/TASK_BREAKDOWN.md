@@ -492,6 +492,7 @@
 | T2b.2、T2b.4、T2b.5、T2b.6 | 代码已落地。仓储单测与重置密码事务单测通过。种子入口改为 `prisma db seed`。临时库演练、连续 seed 和 e2e 未跑（本机没有 Docker） |
 | T2b.1、T2b.3 | 已完成。临时库 schema diff 只剩约定差异。漂移检查无输出。种子连续两次不重复。关系型 e2e 23 项通过 |
 | T2b.7 | 已删除 TypeORM 依赖、关系型适配器和旧迁移脚本。旧迁移在 `docs/modernization/archive/`。Hygen 仍会生成旧适配器，留到 T6.7 |
+| T4.1–T4.3 | 新迁移重建 `session`，刷新令牌改为 HMAC。登出后 access 立即 401。Cookie、限流和 `kid` 还没做 |
 | T3.1–T3.6 | 代码已落地。本机 live 与 Redis 正常时的 ready 为 200。暂停 Redis 后 ready 为 503，live 仍为 200，响应不含连接串 |
 | T3.7 | dev/test/ci 启动脚本等待 Redis、执行 Prisma 迁移并拉起 Worker。`tests` 项目里的关系型 Docker e2e 为 23 项通过 |
 | T4.1 至 T7.5 | 未开始 |

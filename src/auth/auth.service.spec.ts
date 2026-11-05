@@ -1,6 +1,8 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
 import { MailQueueService } from '../queue/mail-queue.service';
+import { SessionRevocationCache } from './session-revocation.cache';
 import { SessionService } from '../session/session.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -32,7 +34,8 @@ describe('AuthService.resetPassword', () => {
       update,
     } as unknown as UsersService;
     const session = {
-      deleteByUserId: jest.fn().mockResolvedValue(undefined),
+      deleteByUserId: jest.fn().mockResolvedValue([]),
+      recordAudit: jest.fn().mockResolvedValue(undefined),
     };
     const prisma = {
       runInTransaction: jest.fn(
@@ -51,6 +54,7 @@ describe('AuthService.resetPassword', () => {
         configService,
         prisma,
         { enqueue: jest.fn() } as unknown as MailQueueService,
+        { revoke: jest.fn() } as unknown as SessionRevocationCache,
       ),
       session,
     };
@@ -63,7 +67,7 @@ describe('AuthService.resetPassword', () => {
     await auth.resetPassword('token', 'new-secret');
 
     expect(session.deleteByUserId).toHaveBeenCalledWith(
-      { userId: user.id },
+      { userId: user.id, reason: 'password_reset' },
       tx,
     );
     expect(update).toHaveBeenCalledWith(user.id, user, tx);
@@ -78,7 +82,7 @@ describe('AuthService.resetPassword', () => {
       'update failed',
     );
     expect(session.deleteByUserId).toHaveBeenCalledWith(
-      { userId: user.id },
+      { userId: user.id, reason: 'password_reset' },
       tx,
     );
     expect(update).toHaveBeenCalledWith(user.id, user, tx);
@@ -99,6 +103,7 @@ describe('AuthService.register', () => {
       } as unknown as ConfigService,
       {} as PrismaService,
       { enqueue } as unknown as MailQueueService,
+      { revoke: jest.fn() } as unknown as SessionRevocationCache,
     );
 
     await auth.register(
@@ -116,5 +121,49 @@ describe('AuthService.register', () => {
     });
     expect(JSON.stringify(enqueue.mock.calls)).not.toContain('hash');
     expect(JSON.stringify(enqueue.mock.calls)).not.toContain('secret');
+  });
+});
+
+describe('AuthService.refreshToken', () => {
+  it('should revoke the session when a consumed token is reused with grace 0', async () => {
+    const session = {
+      findRefreshByHash: jest.fn().mockResolvedValue({
+        id: 'refresh-1',
+        sessionId: 'session-1',
+        expiresAt: new Date(Date.now() + 60_000),
+        consumedAt: new Date(),
+        revokedAt: null,
+        replacedById: 'refresh-2',
+        sessionRevokedAt: null,
+        sessionExpiresAt: new Date(Date.now() + 60_000),
+        userId: 7,
+      }),
+      findRefreshById: jest.fn(),
+      revokeFamily: jest.fn(),
+      recordAudit: jest.fn(),
+    };
+    const auth = new AuthService(
+      {} as JwtService,
+      {} as UsersService,
+      session as unknown as SessionService,
+      {
+        getOrThrow: jest.fn((key: string) =>
+          key === 'auth.reuseGraceSeconds' ? 0 : 'secret_for_refresh',
+        ),
+      } as unknown as ConfigService,
+      {
+        runInTransaction: jest.fn(
+          async (fn: (client: object) => Promise<unknown>) => fn({}),
+        ),
+      } as unknown as PrismaService,
+      {} as MailQueueService,
+      { revoke: jest.fn() } as unknown as SessionRevocationCache,
+    );
+
+    await expect(auth.refreshToken('plain-token')).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+    expect(session.revokeFamily).toHaveBeenCalledWith('session-1', 'reuse', {});
+    expect(session.findRefreshById).not.toHaveBeenCalled();
   });
 });

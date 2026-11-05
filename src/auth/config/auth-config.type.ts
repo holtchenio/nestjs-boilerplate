@@ -10,4 +10,6 @@ export type AuthConfig = {
   confirmEmailSecret?: string;
   confirmEmailExpires?: ms.StringValue;
   uniformErrors: boolean;
+  sessionCheck: boolean;
+  reuseGraceSeconds: number;
 };

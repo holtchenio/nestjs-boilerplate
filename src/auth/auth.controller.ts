@@ -26,8 +26,11 @@ import { User } from '../users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
 import type { RequestWithUser } from '../utils/types/request-with-user.type';
 import type { JwtPayloadType } from './strategies/types/jwt-payload.type';
-import type { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 import { I18nContext } from 'nestjs-i18n';
+import {
+  RefreshTokenGuard,
+  RequestWithRefreshToken,
+} from './guards/refresh-token.guard';
 
 @ApiTags('Auth')
 @Controller({
@@ -115,15 +118,12 @@ export class AuthController {
     groups: ['me'],
   })
   @Post('refresh')
-  @UseGuards(AuthGuard('jwt-refresh'))
+  @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
   public refresh(
-    @Request() request: RequestWithUser<JwtRefreshPayloadType>,
+    @Request() request: RequestWithRefreshToken,
   ): Promise<RefreshResponseDto> {
-    return this.service.refreshToken({
-      sessionId: request.user.sessionId,
-      hash: request.user.hash,
-    });
+    return this.service.refreshToken(request.refreshToken ?? '');
   }
 
   @ApiBearerAuth()
@@ -134,6 +134,7 @@ export class AuthController {
     @Request() request: RequestWithUser<JwtPayloadType>,
   ): Promise<void> {
     await this.service.logout({
+      id: request.user.id,
       sessionId: request.user.sessionId,
     });
   }
