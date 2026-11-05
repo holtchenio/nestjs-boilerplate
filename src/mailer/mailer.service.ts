@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import fs from 'node:fs/promises';
 import { ConfigService } from '@nestjs/config';
-import nodemailer from 'nodemailer';
+import nodemailer, { type SendMailOptions, type Transporter } from 'nodemailer';
 import Handlebars from 'handlebars';
 import { AllConfigType } from '../config/config.type.js';
 
 @Injectable()
 export class MailerService {
-  private readonly transporter: nodemailer.Transporter;
+  private readonly transporter: Transporter;
   constructor(private readonly configService: ConfigService<AllConfigType>) {
     this.transporter = nodemailer.createTransport({
       host: configService.get('mail.host', { infer: true }),
@@ -24,11 +24,15 @@ export class MailerService {
     });
   }
 
+  /**
+   * 读取 Handlebars 模板并发送邮件。
+   * @param options
+   */
   async sendMail({
     templatePath,
     context,
     ...mailOptions
-  }: nodemailer.SendMailOptions & {
+  }: SendMailOptions & {
     templatePath: string;
     context: Record<string, unknown>;
   }): Promise<void> {

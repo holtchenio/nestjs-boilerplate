@@ -23,9 +23,9 @@
 - [x] CI 使用 pnpm frozen lockfile。`.github/workflows/ci.yml` 的安装步骤是 `pnpm install --frozen-lockfile`，并缓存 pnpm。
 - [x] 日志不泄漏 Token、密码和密钥。`HttpErrorFilter` 的测试 `should return a body without a stack for an unknown error` 断言响应没有 stack。暂停 Redis 时的 ready 响应不含连接串。Facebook 换票失败只记 `Facebook token exchange failed`。
 - [x] 文档、环境变量示例和 Agent 规则与最终架构一致。`docs/installing-and-running.md`、`docs/database.md`、`docs/tests.md`、`CLAUDE.md` 与 `.claude/skills/generate/SKILL.md` 描述 Prisma、pnpm、api/worker/migrator。生成器说明里出现 TypeORM / Mongoose 的地方是“不要使用”。
+- [x] `pnpm audit --prod` 退出码 0，输出 `No known vulnerabilities found`。直接依赖升到 `handlebars` 4.7.10、`multer` 2.5.0、`nodemailer` 10.3.1、`rimraf` 6.1.4。`pnpm.overrides` 把 `js-yaml` 4.3.2、`lodash` 4.18.1、`multer` 2.5.0、`path-to-regexp` 8.4.2 固定到已修补版本。CI 的 audit 步骤不再 `continue-on-error`。
 
 ## 未勾选与已知缺口
 
-- `pnpm audit --prod` 当前退出码 1：2 critical（handlebars）、13 high、22 moderate、2 low。CI 里该步骤使用 `continue-on-error`，避免用一次无关的大版本升级挡住其余检查。这不是“审计已通过”。
 - 已有库 baseline 没有演练对象。
 - 人工确认前，不把这次改造标成结束。

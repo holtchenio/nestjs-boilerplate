@@ -213,5 +213,4 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
       - name: Audit production dependencies
-        continue-on-error: true
         run: pnpm audit --prod
