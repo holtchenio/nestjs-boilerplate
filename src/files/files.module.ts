@@ -10,6 +10,8 @@ import { FileConfig, FileDriver } from './config/file-config.type.js';
 import { FilesLocalModule } from './infrastructure/uploader/local/files.module.js';
 import { FilesS3Module } from './infrastructure/uploader/s3/files.module.js';
 import { FilesS3PresignedModule } from './infrastructure/uploader/s3-presigned/files.module.js';
+import { FileUrlService } from './infrastructure/url/file-url.service.js';
+import { FileOrphanCleanup } from './file-orphan-cleanup.js';
 const infrastructurePersistenceModule = PrismaFilePersistenceModule;
 
 const infrastructureUploaderModule =
@@ -25,7 +27,12 @@ const infrastructureUploaderModule =
     infrastructurePersistenceModule,
     infrastructureUploaderModule,
   ],
-  providers: [FilesService],
-  exports: [FilesService, infrastructurePersistenceModule],
+  providers: [FilesService, FileUrlService, FileOrphanCleanup],
+  exports: [
+    FilesService,
+    FileUrlService,
+    FileOrphanCleanup,
+    infrastructurePersistenceModule,
+  ],
 })
 export class FilesModule {}

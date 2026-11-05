@@ -144,6 +144,16 @@ describe('Users Module', () => {
           });
       });
 
+      it('should reject malformed sort json: /api/v1/users (GET)', () => {
+        return request(app)
+          .get('/api/v1/users')
+          .query({ sort: '{' })
+          .auth(apiToken, {
+            type: 'bearer',
+          })
+          .expect(422);
+      });
+
       it('should reject an unknown sort field: /api/v1/users (GET)', () => {
         return request(app)
           .get('/api/v1/users')

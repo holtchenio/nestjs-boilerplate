@@ -48,6 +48,39 @@ export class FilePrismaRepository implements FileRepository {
     const files = await db.file.findMany({ where: { id: { in: ids } } });
     return files.map((file) => toDomain(file));
   }
+
+  /**
+   * 没有 user 引用、且早于给定时间的文件。
+   * @param olderThan
+   * @param db
+   */
+  async findOrphanIds(
+    olderThan: Date,
+    db: DbClient = this.prisma.client,
+  ): Promise<string[]> {
+    const files = await db.file.findMany({
+      where: {
+        createdAt: { lt: olderThan },
+        users: { none: {} },
+      },
+      select: { id: true },
+    });
+    return files.map((file) => file.id);
+  }
+
+  /**
+   * @param ids
+   * @param db
+   */
+  async deleteByIds(
+    ids: string[],
+    db: DbClient = this.prisma.client,
+  ): Promise<void> {
+    if (ids.length === 0) {
+      return;
+    }
+    await db.file.deleteMany({ where: { id: { in: ids } } });
+  }
 }
 
 /**

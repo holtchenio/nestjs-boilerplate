@@ -11,6 +11,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import multerS3 from 'multer-s3';
 
 import { FilesS3PresignedService } from './files.service.js';
+import { FileUrlService } from '../../url/file-url.service.js';
 
 import { PrismaFilePersistenceModule } from '../../persistence/prisma/prisma-persistence.module.js';
 import { AllConfigType } from '../../../../config/config.type.js';
@@ -75,7 +76,12 @@ const infrastructurePersistenceModule = PrismaFilePersistenceModule;
     }),
   ],
   controllers: [FilesS3PresignedController],
-  providers: [ConfigModule, ConfigService, FilesS3PresignedService],
+  providers: [
+    ConfigModule,
+    ConfigService,
+    FileUrlService,
+    FilesS3PresignedService,
+  ],
   exports: [FilesS3PresignedService],
 })
 export class FilesS3PresignedModule {}

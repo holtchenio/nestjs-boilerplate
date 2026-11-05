@@ -33,6 +33,8 @@ import { NullableType } from '../utils/types/nullable.type.js';
 import { QueryUserDto } from './dto/query-user.dto.js';
 import { User } from './domain/user.js';
 import { UsersService } from './users.service.js';
+import { UserPresenter } from './presenters/user.presenter.js';
+import { UserPresenterMapper } from './presenters/user-presenter.mapper.js';
 import { RolesGuard } from '../roles/roles.guard.js';
 import { AuthService } from '../auth/auth.service.js';
 import { infinityPagination } from '../utils/infinity-pagination.js';
@@ -49,22 +51,25 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly authService: AuthService,
+    private readonly users: UserPresenterMapper,
   ) {}
 
   @ApiCreatedResponse({
-    type: User,
+    type: UserPresenter,
   })
   @SerializeOptions({
     groups: ['admin'],
   })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createProfileDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createProfileDto);
+  async create(
+    @Body() createProfileDto: CreateUserDto,
+  ): Promise<UserPresenter | null> {
+    return this.users.present(await this.usersService.create(createProfileDto));
   }
 
   @ApiOkResponse({
-    type: InfinityPaginationResponse(User),
+    type: InfinityPaginationResponse(UserPresenter),
   })
   @SerializeOptions({
     groups: ['admin'],
@@ -73,7 +78,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: QueryUserDto,
-  ): Promise<InfinityPaginationResponseDto<User>> {
+  ): Promise<InfinityPaginationResponseDto<UserPresenter>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
@@ -81,20 +86,22 @@ export class UsersController {
     }
 
     return infinityPagination(
-      await this.usersService.findManyWithPagination({
-        filterOptions: query?.filters,
-        sortOptions: query?.sort,
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
+      await this.users.presentMany(
+        await this.usersService.findManyWithPagination({
+          filterOptions: query?.filters,
+          sortOptions: query?.sort,
+          paginationOptions: {
+            page,
+            limit,
+          },
+        }),
+      ),
       { page, limit },
     );
   }
 
   @ApiOkResponse({
-    type: User,
+    type: UserPresenter,
   })
   @SerializeOptions({
     groups: ['admin'],
@@ -106,12 +113,14 @@ export class UsersController {
     type: String,
     required: true,
   })
-  findOne(@Param('id') id: User['id']): Promise<NullableType<User>> {
-    return this.usersService.findById(id);
+  async findOne(
+    @Param('id') id: User['id'],
+  ): Promise<NullableType<UserPresenter>> {
+    return this.users.present(await this.usersService.findById(id));
   }
 
   @ApiOkResponse({
-    type: User,
+    type: UserPresenter,
   })
   @SerializeOptions({
     groups: ['admin'],
@@ -123,11 +132,13 @@ export class UsersController {
     type: String,
     required: true,
   })
-  update(
+  async update(
     @Param('id') id: User['id'],
     @Body() updateProfileDto: UpdateUserDto,
-  ): Promise<User | null> {
-    return this.usersService.update(id, updateProfileDto);
+  ): Promise<UserPresenter | null> {
+    return this.users.present(
+      await this.usersService.update(id, updateProfileDto),
+    );
   }
 
   @Delete(':id/sessions')

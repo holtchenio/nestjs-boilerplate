@@ -25,9 +25,10 @@ model Status {
 }
 
 model File {
-  id    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  path  String
-  users User[]
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  path      String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  users     User[]
 
   @@map("file")
 }
@@ -107,3 +108,4 @@ model AuthAuditEvent {
   @@index([userId])
   @@map("auth_audit_event")
 }
+

@@ -11,6 +11,7 @@ import { PrismaUserPersistenceModule } from './infrastructure/persistence/prisma
 import { FilesModule } from '../files/files.module.js';
 import { SessionModule } from '../session/session.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { UserPresenterMapper } from './presenters/user-presenter.mapper.js';
 
 const infrastructurePersistenceModule = PrismaUserPersistenceModule;
 
@@ -23,7 +24,7 @@ const infrastructurePersistenceModule = PrismaUserPersistenceModule;
     forwardRef(() => AuthModule),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
-  exports: [UsersService, infrastructurePersistenceModule],
+  providers: [UsersService, UserPresenterMapper],
+  exports: [UsersService, UserPresenterMapper, infrastructurePersistenceModule],
 })
 export class UsersModule {}

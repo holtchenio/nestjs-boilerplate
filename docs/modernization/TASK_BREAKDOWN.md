@@ -401,7 +401,7 @@
 - 目标：`infinityPagination` 改为多取一行判断 `hasNextPage`，响应数据去掉多取的那一行。
 - 文件：`src/utils/infinity-pagination.ts`，用户列表仓储的 `take`。
 - 兼容性：最后一页 `hasNextPage` 从 true 变为 false。这是缺陷修复。
-- 风险：客户端依赖错误的 true。发布说明写一句。
+- 风险：客户端依赖错误的 true。发布说明：满页时 `hasNextPage` 现在为 false。
 - 验收：恰好满页与未满页的单元测试。
 - 人工确认：否。
 
@@ -412,7 +412,7 @@
 - 兼容性：上传非法内容从 201 变为 422。清理任务不碰有引用的文件。
 - 风险：定时任务误删。先做单元测试，dry-run 日志打印将删除的 id。
 - 验收：伪造扩展名的用例 422；孤儿清理用例不删被引用行。
-- 人工确认：否。首次启用定时删除要在 PR 里写明条件。
+- 人工确认：否。清理条件：`createdAt` 早于 24 小时，且没有 `user.photoId` 引用。Worker 每小时执行，删除前日志打印 id。只删数据库行。
 
 ### T6.6 生产默认值
 
@@ -491,9 +491,10 @@
 | T2a.1 | 已完成。`pnpm run build` 与 `pnpm run lint` 通过。本机没有 Docker，关系型 e2e 和生成器套件未跑。`src`、`test`、`package.json`、`.github` 中已无 mongoose |
 | T2b.2、T2b.4、T2b.5、T2b.6 | 代码已落地。仓储单测与重置密码事务单测通过。种子入口改为 `prisma db seed`。临时库演练、连续 seed 和 e2e 未跑（本机没有 Docker） |
 | T2b.1、T2b.3 | 已完成。临时库 schema diff 只剩约定差异。漂移检查无输出。种子连续两次不重复。关系型 e2e 23 项通过 |
-| T2b.7 | 已删除 TypeORM 依赖、关系型适配器和旧迁移脚本。旧迁移在 `docs/modernization/archive/`。Hygen 仍会生成旧适配器，留到 T6.7 |
+| T2b.7 | 已删除 TypeORM 依赖、关系型适配器和旧迁移脚本。旧迁移在 `docs/modernization/archive/`。Hygen 已在 T6.7 改为只生成 Prisma |
 | T4.1–T4.8 | 会话管理、Cookie/CSRF、认证限流和 access `kid` 已接上。本地 e2e 27 项通过。不带 `x-auth-mode: cookie` 时响应仍返回 `refreshToken` |
 | T3.1–T3.6 | 代码已落地。本机 live 与 Redis 正常时的 ready 为 200。暂停 Redis 后 ready 为 503，live 仍为 200，响应不含连接串 |
 | T3.7 | dev/test/ci 启动脚本等待 Redis、执行 Prisma 迁移并拉起 Worker。`tests` 项目里的关系型 Docker e2e 为 23 项通过 |
 | T5.0–T5.6 | 已切到 ESM。`prisma generate` 使用 `moduleFormat=esm` 后 `nest build` 成功。`node dist/main.js` 监听成功，`node dist/worker.js` 完成装载。Redis 队列一发一收返回 echo。Vitest 单元 22 项、e2e 27 项通过。`.hygen.js` 改为具名导出后，`hygen generate relational-resource` 能生成并已清理探针文件。属性生成器钩子改为 `prompt.cjs` |
-| T6.1 至 T7.5 | 未开始 |
+| T6.1–T6.7 | 已完成。领域对象不再带序列化装饰器。文件 URL 在响应前解析。未知错误响应不含堆栈。满页 `hasNextPage` 为 false。上传校验文件头。孤儿文件行由 Worker 每小时清理。生产环境不挂 Swagger。Hygen 探针 `SpikeProbe` 已生成、编译并删除。单元测试 35 项、e2e 28 项通过 |
+| T7.1 至 T7.5 | 未开始 |

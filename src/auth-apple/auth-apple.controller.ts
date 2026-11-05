@@ -13,6 +13,7 @@ import { AuthService } from '../auth/auth.service.js';
 import { AuthAppleService } from './auth-apple.service.js';
 import { AuthAppleLoginDto } from './dto/auth-apple-login.dto.js';
 import { LoginResponseDto } from '../auth/dto/login-response.dto.js';
+import { UserPresenterMapper } from '../users/presenters/user-presenter.mapper.js';
 
 @ApiTags('Auth')
 @Controller({
@@ -23,6 +24,7 @@ export class AuthAppleController {
   constructor(
     private readonly authService: AuthService,
     private readonly authAppleService: AuthAppleService,
+    private readonly users: UserPresenterMapper,
   ) {}
 
   @ApiOkResponse({
@@ -37,6 +39,11 @@ export class AuthAppleController {
   async login(@Body() loginDto: AuthAppleLoginDto): Promise<LoginResponseDto> {
     const socialData = await this.authAppleService.getProfileByToken(loginDto);
 
-    return this.authService.validateSocialLogin('apple', socialData);
+    const result = await this.authService.validateSocialLogin(
+      'apple',
+      socialData,
+    );
+    const user = (await this.users.present(result.user)) ?? result.user;
+    return { ...result, user } as LoginResponseDto;
   }
 }

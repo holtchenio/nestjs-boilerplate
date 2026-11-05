@@ -27,7 +27,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto.js';
 import { LoginResponseDto } from './dto/login-response.dto.js';
 import { NullableType } from '../utils/types/nullable.type.js';
-import { User } from '../users/domain/user.js';
+import { UserPresenter } from '../users/presenters/user.presenter.js';
+import { UserPresenterMapper } from '../users/presenters/user-presenter.mapper.js';
 import { RefreshResponseDto } from './dto/refresh-response.dto.js';
 import type { RequestWithUser } from '../utils/types/request-with-user.type.js';
 import type { JwtPayloadType } from './strategies/types/jwt-payload.type.js';
@@ -52,6 +53,7 @@ export class AuthController {
     private readonly service: AuthService,
     private readonly cookies: AuthCookies,
     private readonly configService: ConfigService<AllConfigType>,
+    private readonly users: UserPresenterMapper,
   ) {}
 
   @SerializeOptions({
@@ -73,7 +75,7 @@ export class AuthController {
       deviceName: loginDto.deviceName,
       deviceType: loginDto.deviceType,
     });
-    return this.presentLogin(result, request, response);
+    return await this.presentLogin(result, request, response);
   }
 
   @Post('email/register')
@@ -128,13 +130,15 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
-    type: User,
+    type: UserPresenter,
   })
   @HttpCode(HttpStatus.OK)
   public me(
     @Request() request: RequestWithUser<JwtPayloadType>,
-  ): Promise<NullableType<User>> {
-    return this.service.me(request.user);
+  ): Promise<NullableType<UserPresenter>> {
+    return this.service
+      .me(request.user)
+      .then((user) => this.users.present(user));
   }
 
   @ApiBearerAuth()
@@ -225,17 +229,15 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
-    type: User,
+    type: UserPresenter,
   })
   public update(
     @Request() request: RequestWithUser<JwtPayloadType>,
     @Body() userDto: AuthUpdateDto,
-  ): Promise<NullableType<User>> {
-    return this.service.update(
-      request.user,
-      userDto,
-      I18nContext.current()?.lang,
-    );
+  ): Promise<NullableType<UserPresenter>> {
+    return this.service
+      .update(request.user, userDto, I18nContext.current()?.lang)
+      .then((user) => this.users.present(user));
   }
 
   @ApiBearerAuth()
@@ -254,16 +256,18 @@ export class AuthController {
    * @param request
    * @param response
    */
-  private presentLogin(
+  private async presentLogin(
     result: LoginResponseDto,
     request: RequestWithRefreshToken,
     response: Response,
-  ): LoginResponseDto {
+  ): Promise<LoginResponseDto> {
+    const user = (await this.users.present(result.user)) ?? result.user;
+    const presented = { ...result, user } as LoginResponseDto;
     if (!this.cookieMode(request) || !result.refreshToken) {
-      return result;
+      return presented;
     }
     this.cookies.write(response, result.refreshToken);
-    const { refreshToken, ...rest } = result;
+    const { refreshToken, ...rest } = presented;
     void refreshToken;
     return rest;
   }

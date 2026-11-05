@@ -90,7 +90,7 @@ infrastructure/persistence/
 ### 启动相关（`src/main.ts`）
 
 - 全局前缀来自 `APP_API_PREFIX`（默认 `api`），启用 URI 版本控制。
-- 全局 `ValidationPipe`（使用 `validationOptions`），另有两个拦截器：`ResolvePromisesInterceptor`（解析响应中的 Promise——class-transformer 无法处理）和 `ClassSerializerInterceptor`（序列化时遵循 `@Exclude`/`@Expose`）。
+- 全局 `ValidationPipe`（使用 `validationOptions`）、`HttpErrorFilter` 和 `ClassSerializerInterceptor`（序列化时遵循 presenter 上的 `@Exclude`/`@Expose`）。生产环境不挂 Swagger。
 - Swagger UI 挂载在 `/docs`，支持 bearer 认证。
 - 通过 `nestjs-i18n` 实现国际化；语言由 `x-custom-lang` 请求头决定，翻译文件位于 `src/i18n/*`（在 `nest-cli.json` 中作为 assets 打包）。
 

@@ -86,7 +86,7 @@ export class UsersPrismaRepository implements UserRepository {
       },
       orderBy: toOrderBy(sortOptions),
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
+      take: paginationOptions.limit + 1,
       include: userWithRelations,
     });
     return users.map((user) => UserMapper.toDomain(user));

@@ -1,3 +1,4 @@
+import { HttpStatus, UnprocessableEntityException } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsIn,
@@ -9,6 +10,25 @@ import {
 import { Transform, Type, plainToInstance } from 'class-transformer';
 import { User } from '../domain/user.js';
 import { RoleDto } from '../../roles/dto/role.dto.js';
+
+/**
+ * 查询串里的 JSON 不合法时返回 422，而不是 500。
+ * @param value
+ * @param field
+ */
+function parseQueryJson(value: unknown, field: string): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new UnprocessableEntityException({
+      status: HttpStatus.UNPROCESSABLE_ENTITY,
+      errors: { [field]: 'invalidJson' },
+    });
+  }
+}
 
 export class FilterUserDto {
   @ApiPropertyOptional({ type: RoleDto })
@@ -47,7 +67,9 @@ export class QueryUserDto {
   @ApiPropertyOptional({ type: String })
   @IsOptional()
   @Transform(({ value }) =>
-    value ? plainToInstance(FilterUserDto, JSON.parse(value)) : undefined,
+    value
+      ? plainToInstance(FilterUserDto, parseQueryJson(value, 'filters'))
+      : undefined,
   )
   @ValidateNested()
   @Type(() => FilterUserDto)
@@ -56,7 +78,9 @@ export class QueryUserDto {
   @ApiPropertyOptional({ type: String })
   @IsOptional()
   @Transform(({ value }) => {
-    return value ? plainToInstance(SortUserDto, JSON.parse(value)) : undefined;
+    return value
+      ? plainToInstance(SortUserDto, parseQueryJson(value, 'sort'))
+      : undefined;
   })
   @ValidateNested({ each: true })
   @Type(() => SortUserDto)

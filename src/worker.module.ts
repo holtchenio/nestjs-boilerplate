@@ -19,6 +19,7 @@ import { authThrottlerModule } from './cache/redis-throttler.storage.js';
 import { RedisModule } from './cache/redis.module.js';
 import { QueueModule } from './queue/queue.module.js';
 import { MailWorkerModule } from './workers/mail/mail-worker.module.js';
+import { FileWorkerModule } from './workers/files/file-worker.module.js';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { MailWorkerModule } from './workers/mail/mail-worker.module.js';
       inject: [ConfigService],
     }),
     MailWorkerModule,
+    FileWorkerModule,
   ],
 })
 export class WorkerModule {}

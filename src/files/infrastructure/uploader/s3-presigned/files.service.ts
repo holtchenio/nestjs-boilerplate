@@ -13,6 +13,8 @@ import { randomStringGenerator } from '@nestjs/common/utils/random-string-genera
 import { ConfigService } from '@nestjs/config';
 import { FileType } from '../../../domain/file.js';
 import { AllConfigType } from '../../../../config/config.type.js';
+import { contentTypeForName } from '../../../image-bytes.js';
+import { FileUrlService } from '../../url/file-url.service.js';
 
 @Injectable()
 export class FilesS3PresignedService {
@@ -21,6 +23,7 @@ export class FilesS3PresignedService {
   constructor(
     private readonly fileRepository: FileRepository,
     private readonly configService: ConfigService<AllConfigType>,
+    private readonly fileUrls: FileUrlService,
   ) {
     this.s3 = new S3Client({
       region: configService.get('file.awsS3Region', { infer: true }),
@@ -74,17 +77,20 @@ export class FilesS3PresignedService {
       .pop()
       ?.toLowerCase()}`;
 
+    const contentType = contentTypeForName(file.fileName);
     const command = new PutObjectCommand({
       Bucket: this.configService.getOrThrow('file.awsDefaultS3Bucket', {
         infer: true,
       }),
       Key: key,
+      ContentType: contentType ?? undefined,
       ContentLength: file.fileSize,
     });
     const signedUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 });
     const data = await this.fileRepository.create({
       path: key,
     });
+    data.path = await this.fileUrls.toPublicPath(data.path);
 
     return {
       file: data,

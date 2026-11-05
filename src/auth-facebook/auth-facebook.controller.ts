@@ -13,6 +13,7 @@ import { AuthService } from '../auth/auth.service.js';
 import { AuthFacebookService } from './auth-facebook.service.js';
 import { AuthFacebookLoginDto } from './dto/auth-facebook-login.dto.js';
 import { LoginResponseDto } from '../auth/dto/login-response.dto.js';
+import { UserPresenterMapper } from '../users/presenters/user-presenter.mapper.js';
 
 @ApiTags('Auth')
 @Controller({
@@ -23,6 +24,7 @@ export class AuthFacebookController {
   constructor(
     private readonly authService: AuthService,
     private readonly authFacebookService: AuthFacebookService,
+    private readonly users: UserPresenterMapper,
   ) {}
 
   @ApiOkResponse({
@@ -40,6 +42,11 @@ export class AuthFacebookController {
     const socialData =
       await this.authFacebookService.getProfileByToken(loginDto);
 
-    return this.authService.validateSocialLogin('facebook', socialData);
+    const result = await this.authService.validateSocialLogin(
+      'facebook',
+      socialData,
+    );
+    const user = (await this.users.present(result.user)) ?? result.user;
+    return { ...result, user } as LoginResponseDto;
   }
 }

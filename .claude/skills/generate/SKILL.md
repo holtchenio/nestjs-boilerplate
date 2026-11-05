@@ -1,21 +1,13 @@
 ---
 name: generate
-description: Add entities/schemas and properties to existing entities via this project's CLI generators (npm run generate:resource:*, npm run add:property:to-*). Use when adding a new entity, a new schema, or a new property to an existing entity/schema in this NestJS boilerplate.
+description: Add entities and properties via this project's Prisma generators (pnpm run generate:resource:relational, pnpm run add:property:to-relational). Use when adding a new entity or a new property to an existing entity in this NestJS boilerplate.
 ---
 
 # Generate Entities and Properties
 
-## Detect the database variant
+持久化只有 Prisma。`package.json` 里保留的命令是 `generate:resource:relational` 和 `add:property:to-relational`。名字里的 relational 只表示 PostgreSQL，生成物不是 TypeORM。
 
-Before running any command, grep `package.json` `scripts` to determine `{db}`:
-
-- `generate:resource:all-db` present → `{db}` = `all-db` (PostgreSQL + MongoDB).
-- `generate:resource:relational` present (and no `all-db`) → `{db}` = `relational` (PostgreSQL/TypeORM).
-- `generate:resource:document` present (and no `all-db`) → `{db}` = `document` (MongoDB).
-
-Do not ask the user — whichever `generate:resource:*` and `add:property:to-*` scripts remain in `package.json` are exactly the right ones to run.
-
-## Add an entity/schema
+## Add an entity
 
 **Rules:**
 - **Never generate `User` or `File` entities** — they already exist. You can reference them in relationships.
@@ -24,34 +16,32 @@ Do not ask the user — whichever `generate:resource:*` and `add:property:to-*` 
 **Command:**
 
 ```bash
-npm run generate:resource:{db} -- --name {EntityName}
+pnpm run generate:resource:relational -- --name {EntityName}
 ```
 
-`{db}` comes from the detection section above.
+Run sequentially, one entity at a time. The generator appends a Prisma model. Run `pnpm exec prisma generate` afterwards. Add a migration when the table should be created.
 
-Run sequentially, one entity at a time.
-
-## Add a property to an entity/schema
+## Add a property to an entity
 
 **Rules:**
 - **Never add `id`, `createdAt`, or `updatedAt`** — these are predefined for all entities.
 - Property names must be camelCase (e.g., `firstName`, `isActive`).
 
 **Property kinds:**
-- `primitive` — basic types: `string`, `number`, `boolean`, `Date`
-- `reference` — relationship to another entity
-- `denormalized` — denormalized copy of another entity's data (stored inline instead of referenced)
+- `primitive` — basic types: `string`, `number`, `boolean`, `Date`. Written into `schema.prisma` and the Prisma repository payload.
+- `reference` — relationship to another entity. Written into the domain object, DTO, and service. The Prisma relation is not generated.
+- `denormalized` — JSON copy stored on the same model.
 
 **Relationship rules:**
-- When creating a property with `referenceType: "oneToMany"`, **do NOT** create the corresponding `manyToOne` in the referenced entity — the generator creates it automatically.
-- **Do NOT create `oneToMany`** if the `propertyInReference` could have many items. Instead, create a `manyToOne` on the child entity only.
-- For **File** relations, use only `oneToOne` or `manyToMany`.
+- Finish the Prisma relation by hand after the generator updates the domain and DTO.
+- For **File** relations, use only `oneToOne` or `manyToOne`.
 - `propertyInReference` is only required when `referenceType` is `oneToMany`.
+- `--shouldAutoLoad` is ignored. Prisma does not use TypeORM eager loading or Mongoose autopopulate.
 
 **Command:**
 
 ```bash
-npm run add:property:to-{db} -- --name {EntityName} --property {propertyName} --kind {kind} --type {type} --referenceType {referenceType} --propertyInReference {propertyInReference} --isAddToDto {isAddToDto} --isOptional {isOptional} --isNullable {isNullable} --shouldAutoLoad {shouldAutoLoad}
+pnpm run add:property:to-relational -- --name {EntityName} --property {propertyName} --kind {kind} --type {type} --referenceType {referenceType} --propertyInReference {propertyInReference} --isAddToDto {isAddToDto} --isOptional {isOptional} --isNullable {isNullable}
 ```
 
 **Argument rules:**
@@ -64,8 +54,7 @@ npm run add:property:to-{db} -- --name {EntityName} --property {propertyName} --
 - `--isAddToDto`: `true` | `false` — whether the property can be set via HTTP request
 - `--isOptional`: `true` | `false`
 - `--isNullable`: `true` | `false` — only meaningful when `isOptional` is `true`
-- `--shouldAutoLoad`: `true` (default) | `false`. Only meaningful for `kind=reference`. `true` emits `eager: true` (TypeORM) and `autopopulate: true` (Mongoose). `false` stores only the related entity's id (Mongoose: `string` field + ObjectId; TypeORM: `eager: false`). No effect for `primitive`/`denormalized`.
 
 **Omit arguments that don't apply** (e.g., omit `--referenceType` for primitive properties, omit `--propertyInReference` unless `referenceType` is `oneToMany`).
 
-Run sequentially, one property at a time.
+Run sequentially, one property at a time. Run `pnpm exec prisma generate` after schema changes.

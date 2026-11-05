@@ -7,4 +7,14 @@ export abstract class FileRepository {
   abstract findById(id: FileType['id']): Promise<NullableType<FileType>>;
 
   abstract findByIds(ids: FileType['id'][]): Promise<FileType[]>;
+
+  /**
+   * @param olderThan
+   */
+  abstract findOrphanIds(olderThan: Date): Promise<string[]>;
+
+  /**
+   * @param ids
+   */
+  abstract deleteByIds(ids: string[]): Promise<void>;
 }

@@ -5,85 +5,33 @@
 ## Table of Contents <!-- omit in toc -->
 
 - [Generate resource](#generate-resource)
-  - [For document oriented database (MongoDB + Mongoose)](#for-document-oriented-database-mongodb--mongoose)
-  - [For relational database (PostgreSQL + TypeORM)](#for-relational-database-postgresql--typeorm)
-    - [Video guideline for relational database (PostgreSQL + TypeORM)](#video-guideline-for-relational-database-postgresql--typeorm)
-  - [For both databases](#for-both-databases)
 - [Add property to resource](#add-property-to-resource)
-  - [Property for document oriented database (MongoDB + Mongoose)](#property-for-document-oriented-database-mongodb--mongoose)
-  - [Property for relational database (PostgreSQL + TypeORM)](#property-for-relational-database-postgresql--typeorm)
-    - [Video guideline how to add property for relational database (PostgreSQL + TypeORM)](#video-guideline-how-to-add-property-for-relational-database-postgresql--typeorm)
-  - [Property for both databases](#property-for-both-databases)
 
 ---
 
 ## Generate resource
 
-Generate resource with the following commands:
+生成的模块使用 Prisma。命令名仍是 `relational`。
 
-### For document oriented database (MongoDB + Mongoose)
-  
 ```bash
-npm run generate:resource:document -- --name ResourceName
+pnpm run generate:resource:relational -- --name ResourceName
 ```
 
 Example:
 
 ```bash
-npm run generate:resource:document -- --name Category
+pnpm run generate:resource:relational -- --name Category
 ```
 
-### For relational database (PostgreSQL + TypeORM)
-
-```bash
-npm run generate:resource:relational -- --name ResourceName
-```
-
-Example:
-
-```bash
-npm run generate:resource:relational -- --name Category
-```
-
-#### Video guideline for relational database (PostgreSQL + TypeORM)
-
-<https://github.com/user-attachments/assets/f7f91a7d-f9ff-4653-a78a-152ac5e7a95d>
-
-### For both databases
-
-```bash
-npm run generate:resource:all-db -- --name ResourceName
-```
-
-Example:
-
-```bash
-npm run generate:resource:all-db -- --name Category
-```
+生成结果会写入 `prisma/schema.prisma`。之后执行 `pnpm exec prisma generate`，需要落库时再写迁移。
 
 ## Add property to resource
 
-### Property for document oriented database (MongoDB + Mongoose)
-
 ```bash
-npm run add:property:to-document
+pnpm run add:property:to-relational
 ```
 
-### Property for relational database (PostgreSQL + TypeORM)
-
-```bash
-npm run add:property:to-relational
-```
-
-#### Video guideline how to add property for relational database (PostgreSQL + TypeORM)
-
-<https://github.com/user-attachments/assets/95b9d70a-70cf-442a-b8bf-a73d32810e0c>
-
-### Property for both databases
-
-```bash
-npm run add:property:to-all-db
-```
+标量字段会写进对应的 Prisma model。关系字段只进入领域对象和 DTO，Prisma 关系需要手写。
 
 ---
 

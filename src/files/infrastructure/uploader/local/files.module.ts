@@ -10,6 +10,7 @@ import { diskStorage } from 'multer';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util.js';
 
 import { FilesLocalService } from './files.service.js';
+import { FileUrlService } from '../../url/file-url.service.js';
 
 import { PrismaFilePersistenceModule } from '../../persistence/prisma/prisma-persistence.module.js';
 import { AllConfigType } from '../../../../config/config.type.js';
@@ -59,7 +60,7 @@ const infrastructurePersistenceModule = PrismaFilePersistenceModule;
     }),
   ],
   controllers: [FilesLocalController],
-  providers: [ConfigModule, ConfigService, FilesLocalService],
+  providers: [ConfigModule, ConfigService, FileUrlService, FilesLocalService],
   exports: [FilesLocalService],
 })
 export class FilesLocalModule {}

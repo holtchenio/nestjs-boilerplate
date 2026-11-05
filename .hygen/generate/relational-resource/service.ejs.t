@@ -5,11 +5,11 @@ import {
   // common
   Injectable,
 } from '@nestjs/common';
-import { Create<%= name %>Dto } from './dto/create-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
-import { Update<%= name %>Dto } from './dto/update-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto';
-import { <%= name %>Repository } from './infrastructure/persistence/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.repository';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { <%= name %> } from './domain/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>';
+import { Create<%= name %>Dto } from './dto/create-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto.js';
+import { Update<%= name %>Dto } from './dto/update-<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.dto.js';
+import { <%= name %>Repository } from './infrastructure/persistence/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.repository.js';
+import { IPaginationOptions } from '../utils/types/pagination-options.js';
+import { <%= name %> } from './domain/<%= h.inflection.transform(name, ['underscore', 'dasherize']) %>.js';
 
 @Injectable()
 export class <%= h.inflection.transform(name, ['pluralize']) %>Service {
