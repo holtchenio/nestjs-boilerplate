@@ -53,7 +53,7 @@ test/generators/
   helpers/
     auth.ts                            # admin login helper
     exec.ts                            # child_process wrapper
-    payloads-relational.ts             # CRUD payload builder for TypeORM variant
+    payloads-relational.ts             # CRUD payload builder for the relational variant
     payloads-document.ts               # CRUD payload builder for Mongoose variant
   _matrix.sh                           # generator command list (sourced by both orchestrators)
   run-static.sh                        # Phase 1 orchestrator
